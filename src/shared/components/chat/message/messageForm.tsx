@@ -1,44 +1,67 @@
 import { ImageIcon, SendIcon } from "@/assets"
-import { useInputText } from "@/hooks"
+import { RootState } from "@/core/store"
 import { OnForwaredResetForm, SendMessageForm } from "@/models"
-import { ChangeEvent, forwardRef, useEffect, useImperativeHandle } from "react"
+import { resetMessageDataInRoom, setMessageDataInRoom } from "@/modules"
+import { ChangeEvent, forwardRef, useImperativeHandle } from "react"
+import { useDispatch, useSelector } from "react-redux"
 
 interface MessageFormProps {
   onSubmit?: (val: SendMessageForm) => void
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void
   onstartTyping?: Function
   onStopTyping?: Function
+  roomId: string
 }
 
 export const MessageForm = forwardRef(function MessageFormChild(
-  { onSubmit, onChange: onChangeProps }: MessageFormProps,
+  { onSubmit, roomId }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
-  const { clearValue, onChange, value } = useInputText()
+  const dispatch = useDispatch()
+  const socket = useSelector((state: RootState) => state.chat.socket)
+  const messageFormData = useSelector(
+    (state: RootState) => state.chat.messageFormData?.find((item) => item.roomId === roomId)?.data
+  )
+
+  console.log(roomId)
 
   useImperativeHandle(ref, () => ({
     onReset() {
-      clearValue()
+      dispatch(resetMessageDataInRoom(roomId))
     },
   }))
 
   const handleSubmit = () => {
-    if (!value) return
-    onSubmit?.({ text: value })
+    if (!messageFormData) return
+    onSubmit?.({ text: messageFormData.text })
   }
 
-  useEffect(() => {}, [])
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    dispatch(setMessageDataInRoom({ data: { text: e.target.value }, roomId }))
+
+    // if (!socket) return
+    // if (!isTyping) {
+    //   // socket.emit("start_typing", roomId)
+    //   setTyping(true)
+    // }
+    // const lastTypingTime = new Date().getTime()
+    // const timerLength = 3000
+    // const timeout = setTimeout(() => {
+    //   const timeNow = new Date().getTime()
+    //   const timeDiff = timeNow - lastTypingTime
+    //   if (timeDiff >= timerLength && isTyping) {
+    //     // socket.emit("stop_typing", roomId)
+    //     setTyping(false)
+    //   }
+    // }, timerLength)
+  }
 
   return (
-    <div className="flex items-center h-[46px] flex-1">
+    <div className="h-[80px] flex-center">
       <div className="flex-1 mr-16">
         <input
           onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
-          onChange={(e) => {
-            onChange(e)
-            onChangeProps?.(e)
-          }}
-          value={value}
+          onChange={handleChange}
+          value={messageFormData?.text}
           type="text"
           placeholder="Nhập tin nhắn"
           className="form-input border-none bg-gray-05 h-full w-full text-sm text-gray-color-4 message-form-input"
@@ -51,7 +74,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
         <button
           onClick={handleSubmit}
           className={`w-[40px] h-[40px] rounded-[8px] flex-center ${
-            !value ? "btn-disabled" : "bg-primary"
+            !messageFormData?.text ? "btn-disabled" : "bg-primary"
           }`}
         >
           <SendIcon className="text-white-color" />

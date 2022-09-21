@@ -30,7 +30,6 @@ export const Message = ({ data, onLikeMessage, onUnlikeMessage }: MessageProps) 
       dataLength={100}
       hasMore={true}
       loader={null}
-      height={window.innerHeight}
       inverse
       next={() => {
         console.log("next")

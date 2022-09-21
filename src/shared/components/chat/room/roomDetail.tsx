@@ -132,27 +132,6 @@ export const RoomDetail = forwardRef(function RoomChild(
     })
   }
 
-  const typingHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!socket) return
-
-    if (!isTyping) {
-      // socket.emit("start_typing", roomId)
-      setTyping(true)
-    }
-    const lastTypingTime = new Date().getTime()
-    const timerLength = 3000
-    const timeout = setTimeout(() => {
-      const timeNow = new Date().getTime()
-      const timeDiff = timeNow - lastTypingTime
-      if (timeDiff >= timerLength && isTyping) {
-        // socket.emit("stop_typing", roomId)
-        setTyping(false)
-      }
-    }, timerLength)
-
-    clearTimeout(timeout)
-  }
-
   const handleLikeMessage = (params: LikeMessage) => {
     likeMessage(params, (data) => {
       socket && socket.emit("like_message", data)
@@ -187,13 +166,7 @@ export const RoomDetail = forwardRef(function RoomChild(
             )}
           </div>
 
-          <div className="h-[78px] flex items-center">
-            <MessageForm
-              onChange={typingHandler}
-              ref={messageFormRef}
-              onSubmit={handleSendMessage}
-            />
-          </div>
+          <MessageForm roomId={roomId} ref={messageFormRef} onSubmit={handleSendMessage} />
         </>
       )}
     </div>

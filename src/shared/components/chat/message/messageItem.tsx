@@ -39,8 +39,8 @@ export const MessageItem = ({
       ) : null}
 
       <div
-        className={`relative p-16 rounded-[8px] min-w-[110px] group w-fit ${
-          data.is_author ? "bg-bg-blue" : "bg-gray-10"
+        className={`relative p-16 rounded-[16px] min-w-[110px] group w-fit ${
+          data.is_author ? "bg-bg-blue" : "bg-gray-05"
         }`}
       >
         {/* <div
@@ -52,10 +52,10 @@ export const MessageItem = ({
         </div> */}
 
         {data?.reply_to?.message_id ? (
-          <div className="p-12 bg-[#C8DEFF] mb-12 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch">
-            <div className="w-[3px] bg-[#3989FF] mr-8 rounded-[5px]"></div>
+          <div className="p-12 bg-gray-10 mb-12 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch">
+            {/* <div className="w-[3px] bg-gray-10 mr-8 rounded-[5px]"></div> */}
             <div className="">
-              <p className="text-xs mb-8 line-clamp-1 word-break">
+              <p className="text-sm mb-8 line-clamp-1 word-break text-gray-color-7">
                 {data.reply_to.author.author_name}
               </p>
               <p className="text-xs line-clamp-1 word-break">{data.reply_to.message_text}</p>
@@ -64,7 +64,11 @@ export const MessageItem = ({
         ) : null}
 
         {data?.message_text ? (
-          <p className={`text-14 leading-20 font-medium ${data.is_author ? "text-primary" : ""}`}>
+          <p
+            className={`text-14 leading-20 font-medium ${
+              data.is_author ? "text-primary" : "text-blue-8"
+            }`}
+          >
             {data.message_text}
           </p>
         ) : null}

@@ -1,4 +1,5 @@
 import { AttachmentRes, IAttachment, Lnglat, QueryCommonParams, TagRes } from "./common"
+import { LatLng } from "./location"
 import { IUser } from "./user"
 
 export interface IMessage {
@@ -111,4 +112,18 @@ export interface UnlikeMessage {
 export interface MutateMessageEmotion {
   messageId: string
   status: "like" | "unlike"
+}
+
+export type MessageAttachment = string[]
+
+export interface MessageForm {
+  tags?: TagRes[]
+  attachments?: MessageAttachment
+  location?: LatLng
+  text?: string
+}
+
+export interface MessageFormData {
+  roomId: string
+  data: MessageForm | undefined
 }

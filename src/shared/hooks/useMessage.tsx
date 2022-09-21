@@ -71,7 +71,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
   const findMessageIndex = (message_id: string): number => {
     const index =
       data && data?.data?.length > 0
-        ? data?.data.findIndex((item) => item.message_id === message_id) || -1
+        ? data?.data.findIndex((item) => item.message_id === message_id)
         : -1
 
     if (index === -1) mutate()
