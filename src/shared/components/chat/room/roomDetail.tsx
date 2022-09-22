@@ -72,7 +72,6 @@ export const RoomDetail = forwardRef(function RoomChild(
     },
     changeStatusOfRoom: (params) => {
       if (!data) return
-      console.log(data.members?.data)
       if (params.type === "logout") {
         if (data.members.data?.length === 2) {
           mutateRoomDetail(
@@ -121,6 +120,7 @@ export const RoomDetail = forwardRef(function RoomChild(
 
   const handleSendMessage = (val: SendMessageForm) => {
     if (!roomId) return
+    
     sendMessage({
       params: { ...val, room_id: roomId },
       onSuccess: (data) => {

@@ -255,3 +255,13 @@ export type UpdateTagMessage = Partial<CreateTagMessage> & {
 export type OnResetParams = {
   onReset: () => void
 }
+
+export interface ImageWithId {
+  id: string
+  url: string
+}
+
+export interface AttachmentResult {
+  formData: FormData
+  previewImages: ImageWithId[]
+}
