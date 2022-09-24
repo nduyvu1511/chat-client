@@ -1,11 +1,15 @@
+import { v4 as uuidv4 } from "uuid"
 import { MESSAGES_LIMIT } from "@/helper"
 import {
+  AttachmentRes,
   LikeMessage,
   LikeMessageRes,
   ListRes,
   MessageRes,
   MutateMessageEmotion,
+  ResponseStatus,
   SendMessage,
+  SendMessageData,
   UnlikeMessage,
   UnlikeMessageRes,
   UseParams,
@@ -14,13 +18,14 @@ import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import produce from "immer"
 import useSWR from "swr"
+import { useAsync } from "./useAsync"
 
 interface UseMessageRes {
   data: ListRes<MessageRes[]> | undefined
   isValidating: boolean
   isFirstLoading: boolean
   getMoreMessages: Function
-  sendMessage: (params: UseParams<SendMessage, MessageRes>) => void
+  sendMessage: (params: UseParams<SendMessageData, MessageRes>) => void
   appendMessage: (params: MessageRes) => void
   confirmReadMessage: (params: MessageRes) => void
   confirmReadAllMessageInRoom: (params: string) => void
@@ -35,6 +40,7 @@ interface UseMessageProps {
 }
 
 export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessageRes => {
+  const { asyncHandler } = useAsync()
   const { isValidating, mutate, data, error } = useSWR<ListRes<MessageRes[]>>(
     roomId ? `get_messages_in_room_${roomId}` : null,
     null,
@@ -58,11 +64,13 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
   }
 
   const appendMessage = (params: MessageRes) => {
+    if (!data) return
+
     mutate(
       produce(data, (draft) => {
         ;(draft?.data || []).push(params)
-        ;(draft as any).offset += 1
-        ;(draft as any).total += 1
+        draft.offset += 1
+        draft.total += 1
       }),
       false
     )
@@ -79,18 +87,90 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     return index
   }
 
-  const sendMessage = async (_: UseParams<SendMessage, MessageRes>) => {
-    const { onSuccess, params, config, onError } = _
+  const createMessageRes = (data: SendMessageData): MessageRes => {
+    const attachments: AttachmentRes[] = data?.attachments
+      ? data?.attachments.map((item) => ({
+          url: item.previewImage,
+          thumbnail_url: item.previewImage,
+          attachment_id: uuidv4(),
+          attachment_type: "image",
+        }))
+      : []
+
+    return {
+      author: {
+        author_avatar: {
+          attachment_id: "test",
+          attachment_type: "image",
+          thumbnail_url: "",
+          url: "",
+        },
+        author_id: "test",
+        author_name: "later on",
+      },
+      attachments,
+      created_at: new Date(),
+      is_author: true,
+      is_liked: false,
+      is_read: true,
+      like_count: 0,
+      message_id: uuidv4(),
+      message_text: data?.text || null,
+      room_id: data.roomId,
+      location: null,
+      reply_to: null,
+      tags: data?.tags || [],
+      status: "pending",
+    }
+  }
+
+  const getMessage = async (data: SendMessageData): Promise<SendMessage> => {
+    let attachment_ids: string[] = []
+    if (data.attachments?.length) {
+      const formData = new FormData()
+      data.attachments.forEach((item) => {
+        ;(formData as FormData).append("images", item.file)
+      })
+
+      // Take attachments from server
+      try {
+        const res: AxiosResponse<AttachmentRes[]> = await chatApi.uploadMultipleImage(formData)
+        if (res?.success) {
+          attachment_ids = res?.data?.map((item) => item.attachment_id) || []
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    return {
+      room_id: data.roomId,
+      attachment_ids,
+      location: data?.location,
+      reply_to: data?.reply_to,
+      tag_ids: data?.tags?.map((item) => item.tag_id) || undefined,
+      text: data?.text,
+    }
+  }
+
+  const sendMessage = async (_: UseParams<SendMessageData, MessageRes>) => {
+    const { onSuccess, params, onError } = _
+    const messageRes = createMessageRes(params)
+    appendMessage(messageRes)
+
     try {
-      const res = await chatApi.sendMessage(params)
+      const messageParams = await getMessage(params)
+      const res = await chatApi.sendMessage(messageParams)
 
       if (res?.success) {
-        appendMessage(res.data)
+        appendMessage({ ...res.data, status: "fulfilled" })
         onSuccess?.(res.data)
       } else {
+        appendMessage({ ...messageRes, status: "rejected" })
         onError?.()
       }
     } catch (error) {
+      appendMessage({ ...messageRes, status: "rejected" })
       onError?.()
       console.log(error)
     }

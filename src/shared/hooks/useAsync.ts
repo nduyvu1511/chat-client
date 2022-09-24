@@ -1,35 +1,41 @@
 import { FetcherConfig } from "@/models"
 import { setScreenLoading } from "@/modules"
 import { AxiosPromise, AxiosResponse } from "axios"
+import { useState } from "react"
 import { useDispatch } from "react-redux"
 import { notify } from "reapop"
 
 export interface asyncHandlerParams<T> {
   fetcher: AxiosPromise<T>
-  onSuccess: (params: T) => void
+  onSuccess?: (params: T) => void
   onError?: (data: any) => void
   config?: FetcherConfig
 }
 
-export interface Res {
+interface Res {
   asyncHandler: <T>(params: asyncHandlerParams<T>) => void
+  isLoading: boolean
 }
 
-const useAsync = () => {
+const useAsync = (): Res => {
   const dispatch = useDispatch()
+  const [isLoading, setLoading] = useState<boolean>(false)
 
   const asyncHandler = async <T>(params: asyncHandlerParams<T>) => {
     const { fetcher, onSuccess, onError, config } = params
     const {
-      showScreenLoading = true,
+      showScreenLoading = false,
       errorMsg,
       successMsg,
       showErrorMsg = true,
-      toggleOverFlow = true,
+      toggleOverFlow = false,
     } = config || {}
+
     try {
+      setLoading(true)
       showScreenLoading && dispatch(setScreenLoading({ show: true, toggleOverFlow }))
       const res: AxiosResponse<T> = await fetcher
+      setLoading(false)
       showScreenLoading && dispatch(setScreenLoading({ show: false, toggleOverFlow }))
       if (!res?.success) {
         showErrorMsg &&
@@ -42,16 +48,18 @@ const useAsync = () => {
         return
       }
       successMsg && setTimeout(() => dispatch(notify(successMsg, "success")), 0)
-      onSuccess(res?.data)
+      onSuccess?.(res?.data)
       return res?.data
     } catch (error) {
       showScreenLoading && dispatch(setScreenLoading({ show: false, toggleOverFlow }))
+      setLoading(false)
       onError?.(undefined)
     }
   }
 
   return {
     asyncHandler,
+    isLoading,
   }
 }
 

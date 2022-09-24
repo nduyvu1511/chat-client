@@ -170,8 +170,8 @@ export interface ContactParams {
 export type ContactFormKey = keyof ContactParams
 
 export interface QueryCommonParams {
-  limit: number
-  offset: number
+  limit?: number
+  offset?: number
 }
 
 export interface ListParams<T> {
@@ -265,3 +265,20 @@ export interface AttachmentResult {
   formData: FormData
   previewImages: ImageWithId[]
 }
+
+export type UploadFileType = "image" | "video"
+
+export interface UploadSingleFile {
+  name: UploadFileType
+  file: File
+}
+
+export interface UploadMultipleFile {
+  params: {
+    name: UploadFileType
+    files: File[]
+  }
+  onSuccess?: (data: AttachmentRes) => void
+}
+
+export type ResponseStatus = "pending" | "rejected" | "fulfilled"

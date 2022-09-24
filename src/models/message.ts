@@ -4,6 +4,7 @@ import {
   ImageWithId,
   Lnglat,
   QueryCommonParams,
+  ResponseStatus,
   TagRes,
 } from "./common"
 import { LatLng } from "./location"
@@ -40,11 +41,12 @@ export type MessageRes = Pick<IMessage, "room_id" | "created_at"> & {
   is_liked: boolean
   attachments: AttachmentRes[]
   like_count: number
-  message_text: string
+  message_text: string | null
   reply_to?: MessageReply | null
   location?: Lnglat | null
   tags?: TagRes[]
   is_read: boolean
+  status?: ResponseStatus
 }
 
 export type AttachmentType = "image" | "video" | "voice"
@@ -73,7 +75,7 @@ export type MessageEmotionType = "like" | "angry" | "sad" | "laugh" | "heart" | 
 
 export type SendMessage = {
   tag_ids?: string[]
-  attachment_ids?: string[]
+  attachment_ids: string[]
   location?: Lnglat
   reply_to?: {
     message_id: string
@@ -81,6 +83,10 @@ export type SendMessage = {
   }
   text?: string
   room_id: string
+}
+
+export type SendMessageData = MessageFormData & {
+  reply_to?: MessageReply
 }
 
 export type SendMessageForm = Partial<
@@ -130,8 +136,8 @@ export type MessageAttachment = {
 export interface MessageForm {
   tags?: TagRes[]
   attachments?: MessageAttachment[]
-  location?: LatLng
-  text?: string
+  location?: Lnglat
+  text?: string | undefined
 }
 
 export type MessageFormData = MessageForm & { roomId: string }

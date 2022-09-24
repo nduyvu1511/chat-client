@@ -110,7 +110,7 @@ export const Chat = () => {
 
     if (!socketIo.current?.id) return
     const socket = socketIo.current
-  if (roomId) {
+    if (roomId) {
       socket.emit("leave_room", roomId)
     }
     socket.emit("join_room", room.room_id)

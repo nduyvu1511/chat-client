@@ -1,3 +1,5 @@
+import { ResponseStatus } from "@/models"
+
 // Regex
 export const PHONE_SCHEMA = /((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9]{8})$/
 export const BIRTHDAY_SCHEMA = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
@@ -101,3 +103,9 @@ export const PAYMENT_METHOD_NAME = {
 }
 
 export const MESSAGES_LIMIT = 30
+
+export const MESSAGE_STATUS = {
+  pending: "Đang gửi",
+  rejected: "Gửi lỗi",
+  fulfilled: "Đã gửi",
+}

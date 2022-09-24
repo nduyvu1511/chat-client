@@ -1,17 +1,29 @@
 import { ImageIcon, SendIcon } from "@/assets"
 import { RootState } from "@/core/store"
 import { isObjectHasValue } from "@/helper"
-import { MessageAttachment, OnForwaredResetForm, SendMessageForm } from "@/models"
-import { deleteMessageAttachment, resetMessageDataInRoom, setMessageDataInRoom } from "@/modules"
+import { useAsync } from "@/hooks"
+import {
+  AttachmentRes,
+  MessageAttachment,
+  OnForwaredResetForm,
+  SendMessageData,
+  SendMessageForm,
+} from "@/models"
+import {
+  addMessageAttachment,
+  deleteMessageAttachment,
+  resetMessageDataInRoom,
+  setMessageDataInRoom,
+} from "@/modules"
 import { chatApi } from "@/services"
-import axios from "axios"
 import { ChangeEvent, forwardRef, useImperativeHandle } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { notify } from "reapop"
 import { v4 as uuidv4 } from "uuid"
 import { ImagePickupPreview } from "./messageImagePicker"
 
 interface MessageFormProps {
-  onSubmit?: (val: SendMessageForm) => void
+  onSubmit?: (val: SendMessageData) => void
   onstartTyping?: Function
   onStopTyping?: Function
   roomId: string
@@ -21,6 +33,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
   { onSubmit, roomId }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
+  const { asyncHandler, isLoading: isUploading } = useAsync()
   const dispatch = useDispatch()
   const socket = useSelector((state: RootState) => state.chat.socket)
   const messageFormData = useSelector((state: RootState) =>
@@ -34,15 +47,11 @@ export const MessageForm = forwardRef(function MessageFormChild(
   }))
 
   const handleSubmit = async () => {
-    if (!messageFormData?.attachments?.length) return
-    const formData = new FormData()
-    messageFormData.attachments.forEach((item) => {
-      formData.append("images", item.file)
-    })
+    if (!messageFormData) return
+    const { attachments, location, tags, text } = messageFormData
 
-    const res = await chatApi.uploadMultipleImage(formData)
-
-    console.log("data back: ", res)
+    if (!attachments && !location && !tags && !text) return
+    onSubmit?.(messageFormData)
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -65,15 +74,65 @@ export const MessageForm = forwardRef(function MessageFormChild(
     // }, timerLength)
   }
 
-  const handleInputFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files?.length) return
+  // const uploadSingleFile = async ({ name, file }: UploadSingleFile) => {
+  //   const formData = new FormData()
+  //   formData.append(name, file)
 
-    const attachments: MessageAttachment[] = Array.from(files).map((file) => ({
+  //   asyncHandler({
+  //     fetcher: (name === "image" ? chatApi.uploadSingleImage : chatApi.uploadSingleVideo)(formData),
+  //     onSuccess: (data) => {
+  //       console.log(data)
+  //     },
+  //   })
+  // }
+
+  // const uploadMultipleFile = async ({ params: { files, name }, onSuccess }: UploadMultipleFile) => {
+  //   const formData = new FormData()
+  //   files.forEach((item) => {
+  //     formData.append(name, item)
+  //   })
+
+  //   asyncHandler({
+  //     fetcher: (name === "image" ? chatApi.uploadMultipleImage : chatApi.uploadSingleVideo)(
+  //       formData
+  //     ),
+  //     onSuccess: (data) => {
+  //       console.log(data)
+  //     },
+  //   })
+  // }
+
+  const handleAddFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const attachments = toAttachments(e)
+    if (!attachments) return
+    if (!checkLimitFile(attachments.length)) return
+
+    dispatch(addMessageAttachment({ data: attachments, roomId }))
+  }
+
+  const checkLimitFile = (length: number): boolean => {
+    if (length + (messageFormData?.attachments?.length || 0) > 20) {
+      dispatch(notify("Bạn chỉ được chọn tối đa 20 ảnh 1 lần", "warning"))
+      return false
+    }
+    return true
+  }
+
+  const toAttachments = (e: ChangeEvent<HTMLInputElement>): MessageAttachment[] | null => {
+    const files = e.target.files
+    if (!files?.length) return null
+
+    return Array.from(files).map((file) => ({
       id: uuidv4(),
       file,
       previewImage: URL.createObjectURL(file),
     }))
+  }
+
+  const handleInputFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const attachments = toAttachments(e)
+    if (!attachments) return
+    if (!checkLimitFile(attachments.length)) return
 
     dispatch(setMessageDataInRoom({ data: { attachments }, roomId }))
   }
@@ -93,7 +152,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
             className="form-input border-none bg-gray-05 h-full w-full text-sm text-gray-color-4 message-form-input"
           />
         </div>
-        <div className="flex items-center">
+
+        <div className={`flex items-center ${isUploading ? "pointer-events-none" : ""}`}>
           <input
             onChange={handleInputFileChange}
             hidden
@@ -125,6 +185,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
       {messageFormData?.attachments?.length ? (
         <div className="">
           <ImagePickupPreview
+            showLoading={isUploading}
+            onAdd={handleAddFile}
             onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
             data={messageFormData?.attachments || []}
           />

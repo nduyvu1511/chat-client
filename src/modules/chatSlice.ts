@@ -1,4 +1,4 @@
-import { ImageWithId, MessageForm, MessageFormData, PayloadType } from "@/models"
+import { ImageWithId, MessageAttachment, MessageForm, MessageFormData, PayloadType } from "@/models"
 import { createSlice } from "@reduxjs/toolkit"
 import { Socket } from "socket.io-client"
 
@@ -28,7 +28,7 @@ const chatSlice = createSlice({
 
     setMessageDataInRoom: (
       state,
-      { payload }: PayloadType<{ data: MessageForm } & { roomId: string }>
+      { payload }: PayloadType<{ data: MessageForm; roomId: string }>
     ) => {
       const index = state.messageFormData.findIndex((item) => {
         return item.roomId === payload.roomId
@@ -50,21 +50,19 @@ const chatSlice = createSlice({
 
     addMessageAttachment: (
       state,
-      { payload }: PayloadType<{ previewImage: ImageWithId; file: File; roomId: string }>
+      { payload }: PayloadType<{ data: MessageAttachment[]; roomId: string }>
     ) => {
-      // const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
-      // if (index === -1) return
-      // if (!state.messageFormData[index]?.attachment?.formData) {
-      //   state.messageFormData[index].attachment = {
-      //     formData: new FormData(),
-      //     previewImages: [],
-      //   }
-      // }
-      // state.messageFormData[index]?.attachment?.previewImages?.push(payload.previewImage)
-      // state.messageFormData[index]?.attachment?.formData.append(
-      //   payload.previewImage.id,
-      //   payload.file
-      // )
+      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+      if (index === -1) return
+
+      if (!state?.messageFormData[index]?.attachments?.length) {
+        state.messageFormData[index].attachments = payload.data
+      } else {
+        state.messageFormData[index].attachments = [
+          ...(state.messageFormData[index]?.attachments || []),
+          ...payload.data,
+        ]
+      }
     },
 
     deleteMessageAttachment: (

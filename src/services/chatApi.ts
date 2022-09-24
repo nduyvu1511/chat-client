@@ -11,8 +11,8 @@ import {
 } from "@/models"
 import { setProfile } from "@/modules"
 import axios from "axios"
-import { store } from "../core"
 import mem from "mem"
+import { store } from "../core"
 
 const axiosClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DOMAIN_URL}/api`,
@@ -76,8 +76,14 @@ const chatApi = {
     return axiosClient.post("/room/group_chat", params)
   },
 
-  getRoomList: () => {
-    return axiosClient.get("/room")
+  getRoomList: ({
+    limit = 12,
+    offset = 0,
+    search_term,
+  }: QueryCommonParams & { search_term?: string }) => {
+    return axiosClient.get(
+      `/room?limit=${limit}&offset=${offset}${search_term ? `&search_term=${search_term}` : ""}`
+    )
   },
 
   getRoomDetail: (roomId: string) => {
@@ -173,6 +179,18 @@ const chatApi = {
 
   uploadMultipleImage: (formData: FormData) => {
     return axiosClient.post(`/attachment/image/multiple`, formData)
+  },
+
+  uploadMultipleVideo: (formData: FormData) => {
+    return axiosClient.post(`/attachment/video/multiple`, formData)
+  },
+
+  uploadSingleVideo: (formData: FormData) => {
+    return axiosClient.post(`/attachment/video/single`, formData)
+  },
+
+  deleteAttachment: (id: string) => {
+    return axiosClient.delete(`/attachment/${id}`)
   },
 }
 

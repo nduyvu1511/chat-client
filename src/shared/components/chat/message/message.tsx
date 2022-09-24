@@ -37,7 +37,7 @@ export const Message = ({ data, onLikeMessage, onUnlikeMessage }: MessageProps) 
     >
       {data?.data?.length
         ? data.data.map((item) => (
-            <div className="mb-10" key={item.message_id} ref={ref}>
+            <div className="mb-24" key={item.message_id} ref={ref}>
               <MessageItem
                 onLikeMessage={onLikeMessage}
                 onUnlikeMessage={onUnlikeMessage}

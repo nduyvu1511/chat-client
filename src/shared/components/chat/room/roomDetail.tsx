@@ -6,6 +6,7 @@ import {
   OnResetParams,
   RoomDetailFunctionHandler,
   RoomDetailRes,
+  SendMessageData,
   SendMessageForm,
   UnlikeMessage,
 } from "@/models"
@@ -118,13 +119,13 @@ export const RoomDetail = forwardRef(function RoomChild(
     ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
   }, [roomId])
 
-  const handleSendMessage = (val: SendMessageForm) => {
+  const handleSendMessage = (val: SendMessageData) => {
     if (!roomId) return
-    
+    messageFormRef?.current?.onReset()
+
     sendMessage({
-      params: { ...val, room_id: roomId },
+      params: { ...val, roomId: roomId },
       onSuccess: (data) => {
-        messageFormRef?.current?.onReset()
         if (socket) {
           socket.emit("send_message", data)
         }

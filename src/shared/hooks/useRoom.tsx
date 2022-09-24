@@ -27,6 +27,7 @@ export const useRoom = (roomId?: string): UseRoomRes => {
   } = useQueryList<ListRes<RoomRes[]>>({
     fetcher: chatApi.getRoomList,
     initialData: undefined,
+    params: {},
     key: "get_room_list",
     limit: 30,
   })

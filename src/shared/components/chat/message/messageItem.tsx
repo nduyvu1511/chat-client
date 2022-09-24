@@ -3,6 +3,7 @@ import moment from "moment"
 import Image from "next/image"
 import { BiLike } from "react-icons/bi"
 import { AiTwotoneLike } from "react-icons/ai"
+import { MESSAGE_STATUS } from "@/helper"
 
 interface MessageItemProps {
   className?: string
@@ -22,27 +23,24 @@ export const MessageItem = ({
   return (
     <div
       className={`relative flex flex-col ${data?.is_author ? "items-end ml-auto" : "items-start"} ${
-        data.attachments?.length ? "" : "max-w-[60%]"
+        data.attachments?.length ? "" : "max-w-[50%]"
       } ${className}`}
     >
-      {data?.attachments?.length ? (
-        <div className="grid grid-cols-2 gap-8 w-full max-w-[60%]">
-          {data.attachments.map((item) => (
-            <div
-              key={item.attachment_id}
-              className="relative aspect-[4/3] rounded-[5px] overflow-hidden"
-            >
-              <Image layout="fill" alt="" objectFit="cover" src={item.thumbnail_url} />
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       <div
         className={`relative p-16 rounded-[16px] min-w-[110px] group w-fit ${
-          data.is_author ? "bg-bg-blue" : "bg-gray-05"
+          data.is_author && data.message_text ? "bg-bg-blue" : "bg-bg"
         }`}
       >
+        {data?.message_text ? (
+          <p
+            className={`text-14 leading-20 font-medium ${
+              data.is_author ? "text-primary" : "text-blue-8"
+            }`}
+          >
+            {data.message_text}
+          </p>
+        ) : null}
+
         {/* <div
           className={`absolute right-[calc(100%+20px)] w-[200px] ${
             lastMessage.room_id === data.room_id ? "" : "hidden"
@@ -63,20 +61,14 @@ export const MessageItem = ({
           </div>
         ) : null}
 
-        {data?.message_text ? (
-          <p
-            className={`text-14 leading-20 font-medium ${
-              data.is_author ? "text-primary" : "text-blue-8"
-            }`}
-          >
-            {data.message_text}
-          </p>
-        ) : null}
         <div className="flex items-center justify-between mt-12">
           <span className="text-xs text-[10px] mr-12">
             {moment(data.created_at).format("HH:mm")}
           </span>
-          {lastMessage.message_id === data.message_id && lastMessage.is_author ? (
+
+          {data?.status && data?.status !== "fulfilled" ? (
+            <span className="text-xs text-[10px]"> {MESSAGE_STATUS[data.status]}</span>
+          ) : lastMessage.message_id === data.message_id && lastMessage.is_author ? (
             <span className="text-xs text-[10px]"> {data.is_read ? "Đã xem" : "Đã gửi"}</span>
           ) : null}
         </div>
@@ -109,6 +101,19 @@ export const MessageItem = ({
           </button>
         </div>
       </div>
+
+      {data?.attachments?.length ? (
+        <div className="grid grid-cols-3 gap-8 w-full max-w-[50%]">
+          {data.attachments.map((item) => (
+            <div
+              key={item.attachment_id}
+              className="relative aspect-1 rounded-[5px] overflow-hidden"
+            >
+              <Image layout="fill" alt="" objectFit="cover" src={item.thumbnail_url} />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
