@@ -9,6 +9,7 @@ module.exports = withImages({
     disableStaticImages: true,
     domains: [
       "quanly.exxe.vn",
+      "yt3.ggpht.com",
       process.env.NEXT_PUBLIC_IMAGE_URL,
       process.env.NEXT_PUBLIC_NEWS_IMAGE,
     ],

@@ -33,7 +33,7 @@ export const InputSearch = ({
   return (
     <div className={`w-full h-full relative flex items-center rounded-[8px] ${className}`}>
       <span className="absolute-vertical left-[14px]">
-        <SearchIcon className="w-[16px] h-[16px]" />
+        <SearchIcon className="w-[16px] h-[16px] text-gray-color-6" />
       </span>
       <input
         onFocus={() => onFocus?.()}

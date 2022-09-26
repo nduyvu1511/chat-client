@@ -25,31 +25,35 @@ export const Message = ({ data, onLikeMessage, onUnlikeMessage }: MessageProps) 
   }, [data?.data?.length, isTyping])
 
   return (
-    <InfiniteScroll
-      className="chat-message-list overflow-y-auto pr-12 flex-1"
-      dataLength={100}
-      hasMore={true}
-      loader={null}
-      inverse
-      next={() => {
-        console.log("next")
-      }}
+    <div
+      className="flex-1 flex flex-col overflow-y-auto pr-12 chat-message-list"
+      id="scrollableDiv"
     >
-      {data?.data?.length
-        ? data.data.map((item) => (
-            <div className="mb-24" key={item.message_id} ref={ref}>
-              <MessageItem
-                onLikeMessage={onLikeMessage}
-                onUnlikeMessage={onUnlikeMessage}
-                lastMessage={data.data?.[data?.data?.length - 1]}
-                key={item.message_id}
-                data={item}
-              />
-            </div>
-          ))
-        : null}
+      <InfiniteScroll
+        className="flex-1"
+        scrollableTarget="scrollableDiv"
+        // loader={isFetchingMore ? <Spinner /> : null}
+        loader={null}
+        hasMore={true}
+        next={() => console.log("more items")}
+        dataLength={data?.data?.length}
+      >
+        {data?.data?.length
+          ? data.data.map((item) => (
+              <div className="mb-10" key={item.message_id} ref={ref}>
+                <MessageItem
+                  onLikeMessage={onLikeMessage}
+                  onUnlikeMessage={onUnlikeMessage}
+                  lastMessage={data.data?.[data?.data?.length - 1]}
+                  key={item.message_id}
+                  data={item}
+                />
+              </div>
+            ))
+          : null}
 
-      {isTyping ? <div>typing...</div> : null}
-    </InfiniteScroll>
+        {isTyping ? <div>typing...</div> : null}
+      </InfiniteScroll>
+    </div>
   )
 }

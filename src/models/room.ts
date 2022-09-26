@@ -22,17 +22,26 @@ export interface IRoom {
 export interface RoomRes {
   room_id: string
   room_name: string | null
-  room_avatar?: AttachmentRes | null
+  room_avatar?: string | null
   room_type: RoomType
-  member_count: number
-  last_message?: LastMessage | null
-  created_at: Date
   is_online: boolean
+  member_count: number
   message_unread_count: number
-  offline_at: Date
+  last_message?: LastMessage | null
+  top_members?: {
+    user_avatar: string
+    user_name: string
+    user_id: string
+    is_online: boolean
+  }[]
 }
 
-export interface RoomDetailRes extends RoomRes {
+export type RoomDetailRes = Omit<
+  RoomRes,
+  "message_unread_count" | "last_message" | "room_avatar"
+> & {
+  room_avatar: AttachmentRes | null
+  offline_at: Date | null
   messages_pinned: ListRes<MessageRes[]>
   messages: ListRes<MessageRes[]>
   members: ListRes<RoomMemberRes[]>
@@ -58,8 +67,10 @@ export interface RoomMemberWithId {
 
 export type LastMessage = Pick<
   MessageRes,
-  "message_id" | "message_text" | "is_author" | "author" | "created_at" | "room_id"
->
+  "message_id" | "message_text" | "is_author" | "created_at" | "room_id"
+> & {
+  author_name: string
+}
 
 export interface CreateSingleChat {
   partner_id: number
@@ -115,11 +126,11 @@ export interface ClearUnreadMessage {
 export type ChangeStatusOfRoom = UserData & { type: "login" | "logout" }
 
 export interface RoomFunctionHandler {
-  messageUnreadhandler: (_: LastMessage) => void
+  messageUnreadhandler: (_: MessageRes) => void
   changeStatusOfRoom: (_: ChangeStatusOfRoom) => void
-  increaseMessageUnread: (_: LastMessage) => void
-  appendLastMessage: (_: LastMessage) => void
-  setCurrentRoomToFirstOrder: (_: LastMessage) => void
+  increaseMessageUnread: (_: MessageRes) => void
+  appendLastMessage: (_: MessageRes) => void
+  changeOrderAndAppendLastMessage: (_: MessageRes) => void
 }
 
 export interface RoomDetailFunctionHandler {

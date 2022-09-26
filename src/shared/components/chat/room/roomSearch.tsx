@@ -58,36 +58,58 @@ export const RoomSearch = ({
         </button>
       </div>
 
-      <div className="mt-24">
+      <div className="mt-24 flex-1 flex flex-col">
         {searchTerm ? (
-          data?.data ? (
-            <InfiniteScroll
-              className="mt-16"
-              hasMore={data?.hasMore}
-              dataLength={data.data.length}
-              loader={<Spinner />}
-              next={() => {}}
-            >
-              <p className="text-sm font-semibold mb-8">Kết quả tìm kiếm ({data.total})</p>
-              {data.data.map((item) => (
-                <RoomItem
-                  isActive={currentRoomSelected === item.room_id}
-                  type="search"
-                  data={item}
-                  onSelectRoom={(val) => {
-                    onSelectRoom?.(val)
-                    if (!roomHistory?.some((item) => item.room_id === val.room_id)) {
-                      dispatch(addRoomHistory(item))
-                    }
-                    console.log(val)
-                  }}
-                  key={item.room_id}
-                />
-              ))}
-            </InfiniteScroll>
-          ) : null
+          isValidating ? (
+            <>
+              <RoomItem data={null} />
+              <RoomItem data={null} />
+              <RoomItem data={null} />
+              <RoomItem data={null} />
+              <RoomItem data={null} />
+              <RoomItem data={null} />
+            </>
+          ) : (
+            <>
+              {data?.data?.length ? (
+                <div id="scrollableDiv" className="chat-room-search overflow-y-auto pr-12 flex-1">
+                  <p className="text-sm font-semibold mb-16">Kết quả tìm kiếm ({data.total})</p>
+
+                  <InfiniteScroll
+                    scrollableTarget="scrollableDiv"
+                    className="mt-16"
+                    hasMore={data?.has_more}
+                    dataLength={data.data.length}
+                    loader={<Spinner />}
+                    next={() => {}}
+                  >
+                    {data.data.map((item) => (
+                      <RoomItem
+                        isActive={currentRoomSelected === item.room_id}
+                        type="search"
+                        data={item}
+                        onSelectRoom={(val) => {
+                          onSelectRoom?.(val)
+                          if (!roomHistory?.some((item) => item.room_id === val.room_id)) {
+                            dispatch(addRoomHistory(item))
+                          }
+                          console.log(val)
+                        }}
+                        key={item.room_id}
+                      />
+                    ))}
+                  </InfiniteScroll>
+                </div>
+              ) : (
+                <div className="flex-center flex-col mt-40 text-sm font-semibold">
+                  <p className="mb-4">Không có kết quả</p>
+                  <p className="">Vui lòng thử lại từ khóa khác</p>
+                </div>
+              )}
+            </>
+          )
         ) : (
-          <>
+          <div className="chat-room-search overflow-y-auto pr-12 flex-1">
             <p className="text-sm font-semibold mb-8">Tìm gần đây</p>
             {roomHistory.map((item) => (
               <RoomItem
@@ -101,7 +123,7 @@ export const RoomSearch = ({
                 key={item.room_id}
               />
             ))}
-          </>
+          </div>
         )}
       </div>
     </>

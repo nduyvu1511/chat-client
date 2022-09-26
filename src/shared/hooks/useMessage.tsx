@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid"
 import { MESSAGES_LIMIT } from "@/helper"
 import {
   AttachmentRes,
@@ -7,7 +6,6 @@ import {
   ListRes,
   MessageRes,
   MutateMessageEmotion,
-  ResponseStatus,
   SendMessage,
   SendMessageData,
   UnlikeMessage,
@@ -18,7 +16,7 @@ import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import produce from "immer"
 import useSWR from "swr"
-import { useAsync } from "./useAsync"
+import { v4 as uuidv4 } from "uuid"
 
 interface UseMessageRes {
   data: ListRes<MessageRes[]> | undefined
@@ -40,7 +38,6 @@ interface UseMessageProps {
 }
 
 export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessageRes => {
-  const { asyncHandler } = useAsync()
   const { isValidating, mutate, data, error } = useSWR<ListRes<MessageRes[]>>(
     roomId ? `get_messages_in_room_${roomId}` : null,
     null,
@@ -204,26 +201,19 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     }
   }
 
-  const mutateMessageEmotion = ({
-    messageId,
-    status,
-  }: {
-    messageId: string
-    status: "like" | "unlike"
-  }) => {
-    console.log("mutate message emotion")
-    console.log(data?.data)
+  const mutateMessageEmotion = ({ messageId, status, is_author }: MutateMessageEmotion) => {
     if (!data?.data?.length) return
-    console.log("mutate message emotion 2")
     const index = findMessageIndex(messageId)
     if (!index) return
-    console.log(data.data[index])
 
     mutate(
       produce(data, (draft) => {
         if (status === "like") {
+          if (is_author) {
+            draft.data[index].is_liked = true
+          }
+
           draft.data[index].like_count += 1
-          draft.data[index].is_liked = true
         } else {
           draft.data[index].like_count -= 1
           draft.data[index].is_liked = false
@@ -238,7 +228,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
 
     if (res?.success) {
       cb?.(res.data)
-      mutateMessageEmotion({ messageId: res.data.message_id, status: "unlike" })
+      mutateMessageEmotion({ messageId: res.data.message_id, status: "unlike", is_author: true })
     }
   }
 
@@ -247,7 +237,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
 
     if (res?.success) {
       cb?.(res.data)
-      mutateMessageEmotion({ messageId: res.data.message_id, status: "like" })
+      mutateMessageEmotion({ messageId: res.data.message_id, status: "like", is_author: true })
     }
   }
 

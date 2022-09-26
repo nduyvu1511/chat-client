@@ -15,7 +15,7 @@ const roomHistorySlice = createSlice({
   reducers: {
     addRoomHistory: (state, { payload }: PayloadType<RoomRes>) => {
       if (!state.data.some((item) => item.room_id === payload.room_id)) {
-        state.data.push(payload)
+        state.data.unshift(payload)
       }
     },
 

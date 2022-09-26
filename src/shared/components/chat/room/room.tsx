@@ -1,8 +1,9 @@
-import { InputSearch } from "@/components"
+import { InputSearch, Spinner } from "@/components"
 import { RootState } from "@/core/store"
 import { useRoom } from "@/hooks"
 import { RoomFunctionHandler, RoomRes } from "@/models"
 import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useState } from "react"
+import InfiniteScroll from "react-infinite-scroll-component"
 import { useSelector } from "react-redux"
 import { RoomItem } from "./roomItem"
 import { RoomSearch } from "./roomSearch"
@@ -26,9 +27,12 @@ export const Room = forwardRef(function RoomChild(
     changeStatusOfRoom,
     messageUnreadhandler,
     increaseMessageUnread,
-    setCurrentRoomToFirstOrder,
+    changeOrderAndAppendLastMessage,
     appendLastMessage,
     clearMessagesUnreadFromRoom,
+    fetchMoreRooms,
+    isFetchingMore,
+    hasMore,
   } = useRoom(roomId)
 
   useImperativeHandle(ref, () => ({
@@ -43,8 +47,8 @@ export const Room = forwardRef(function RoomChild(
         increaseMessageUnread(params)
       }
     },
-    setCurrentRoomToFirstOrder: (params) => {
-      setCurrentRoomToFirstOrder(params)
+    changeOrderAndAppendLastMessage: (params) => {
+      changeOrderAndAppendLastMessage(params)
     },
     appendLastMessage: (params) => {
       appendLastMessage(params)
@@ -61,9 +65,9 @@ export const Room = forwardRef(function RoomChild(
   return (
     <div className="chat-room flex-1 flex flex-col relative">
       {showSearch ? (
-        <div className="mb-24 pr-12  bg-white-color z-10">
+        <div className="bg-white-color z-10 flex flex-col flex-1">
           <RoomSearch
-            currentRoomSelected = {roomId}
+            currentRoomSelected={roomId}
             onSelectRoom={onSelectRoom}
             onClose={() => setShowSearch(false)}
             onOpen={() => setShowSearch(true)}
@@ -77,12 +81,18 @@ export const Room = forwardRef(function RoomChild(
               onFocus={() => setShowSearch(true)}
             />
           </div>
-          {data && data?.data?.length > 0 ? (
-            <div className="flex-1 overflow-auto chat-room-list pr-12">
-              <div className="">
-                <p className="text-base font-semibold mb-16">Tin nhắn</p>
 
-                <div className="">
+          {data && data?.data?.length > 0 ? (
+            <div className="flex-1 flex flex-col chat-room-list">
+              <p className="text-base font-semibold mb-16">Tin nhắn</p>
+              <div className="flex-1 overflow-y-auto pr-12" id="scrollableDiv">
+                <InfiniteScroll
+                  scrollableTarget="scrollableDiv"
+                  loader={isFetchingMore ? <Spinner /> : null}
+                  hasMore={hasMore}
+                  next={() => fetchMoreRooms()}
+                  dataLength={data?.data?.length}
+                >
                   {data.data.map((item) => (
                     <RoomItem
                       isActive={item.room_id === roomId}
@@ -91,7 +101,7 @@ export const Room = forwardRef(function RoomChild(
                       data={item}
                     />
                   ))}
-                </div>
+                </InfiniteScroll>
               </div>
             </div>
           ) : null}

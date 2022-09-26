@@ -1,10 +1,10 @@
 import { blankAvatar, ThreeDotsIcon } from "@/assets"
-import { RoomRes } from "@/models"
+import { RoomDetailRes } from "@/models"
 import moment from "moment"
 import { Avatar } from "../avatar"
 
 interface RoomHeaderProps {
-  data: RoomRes
+  data: RoomDetailRes
 }
 
 export const RoomHeader = ({ data }: RoomHeaderProps) => {
@@ -13,8 +13,11 @@ export const RoomHeader = ({ data }: RoomHeaderProps) => {
       <div className="flex items-center flex-1 mr-16">
         <div className="mr-12">
           <Avatar
+            memberCount={data.member_count}
+            isGroup={data.room_type === "group"}
             isOnline={data.is_online}
             avatar={data.room_avatar?.thumbnail_url || blankAvatar}
+            avatarGroup={data.members?.data?.map((item) => item.avatar.thumbnail_url)}
           />
         </div>
 

@@ -77,7 +77,7 @@ const chatApi = {
   },
 
   getRoomList: ({
-    limit = 12,
+    limit = 30,
     offset = 0,
     search_term,
   }: QueryCommonParams & { search_term?: string }) => {

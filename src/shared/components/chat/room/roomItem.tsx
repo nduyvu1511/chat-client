@@ -5,7 +5,7 @@ import moment from "moment"
 import { Avatar } from "../avatar"
 
 interface RoomItemProps {
-  data: RoomRes
+  data: RoomRes | null
   isActive?: boolean
   type?: "search" | "room" | "history"
   onSelectRoom?: (data: RoomRes) => void
@@ -19,6 +19,18 @@ export const RoomItem = ({
   type = "room",
   onDeleteHistory,
 }: RoomItemProps) => {
+  if (data === null)
+    return (
+      <div className="flex items-center py-16">
+        <div className="w-[56px] h-[56px] rounded-[50%] mr-12 skeleton"></div>
+        <div className="flex-1">
+          <div className="h-[14px] skeleton rounded-[4px] max-w-[120px] w-[70%] mr-24 mb-8"></div>
+          <div className="h-12 w-[40%] skeleton rounded-[4px] mb-8"></div>
+          <div className="h-12 w-[90%] skeleton rounded-[4px]"></div>
+        </div>
+      </div>
+    )
+
   return (
     <div
       onClick={() => onSelectRoom?.(data)}
@@ -27,7 +39,13 @@ export const RoomItem = ({
       }`}
     >
       <div className="mr-12">
-        <Avatar avatar={data.room_avatar?.thumbnail_url || ""} isOnline={data.is_online} />
+        <Avatar
+          isGroup={data.room_type === "group"}
+          avatarGroup={data.top_members?.map((item) => item.user_avatar)}
+          avatar={data?.room_avatar || ""}
+          isOnline={data.is_online}
+          memberCount={data.member_count}
+        />
       </div>
 
       <div className="flex-1">
@@ -54,13 +72,17 @@ export const RoomItem = ({
           ) : null}
         </div>
 
-        {data?.last_message && type === "room" ? (
+        {data?.last_message?.message_id && type === "room" ? (
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-10 text-gray-color-6 font-medium leading-[18px]">
-                {data.last_message?.author?.author_name}
+              <p className="text-10 text-gray-color-6 font-medium leading-[18px] mb-2">
+                {data?.last_message?.is_author ? "Bạn: " : data.last_message?.author_name}
               </p>
-              <p className={`text-xs line-clamp-1 ${true ? "text-gray-color-7" : "text-primary"}`}>
+              <p
+                className={`text-xs line-clamp-1 ${
+                  !data?.message_unread_count ? "text-gray-color-7" : "text-blue-50"
+                }`}
+              >
                 {data?.last_message?.message_text}
               </p>
             </div>

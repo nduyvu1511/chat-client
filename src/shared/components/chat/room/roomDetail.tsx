@@ -3,25 +3,17 @@ import { RootState } from "@/core/store"
 import { useMessage } from "@/hooks"
 import {
   LikeMessage,
+  MessageRes,
   OnResetParams,
   RoomDetailFunctionHandler,
   RoomDetailRes,
   SendMessageData,
-  SendMessageForm,
   UnlikeMessage,
 } from "@/models"
 import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import produce from "immer"
-import {
-  ChangeEvent,
-  ForwardedRef,
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react"
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from "react"
 import { useSelector } from "react-redux"
 import useSWR, { mutate } from "swr"
 import { Message, MessageForm } from "../message"
@@ -31,14 +23,14 @@ type OnForwaredRoomDetail = ForwardedRef<RoomDetailFunctionHandler>
 
 interface RoomDetailProps {
   roomId: string
+  onSendMessage?: (_: MessageRes) => void
 }
 
 export const RoomDetail = forwardRef(function RoomChild(
-  { roomId }: RoomDetailProps,
+  { roomId, onSendMessage }: RoomDetailProps,
   ref: OnForwaredRoomDetail
 ) {
   const socket = useSelector((state: RootState) => state.chat.socket)
-  const [isTyping, setTyping] = useState<boolean>(false)
   const messageFormRef = useRef<OnResetParams>(null)
   const {
     data,
@@ -93,8 +85,6 @@ export const RoomDetail = forwardRef(function RoomChild(
       }
     },
     changeMesageStatus: async (params) => {
-      console.log("change message status: ", params)
-
       confirmReadMessage(params)
     },
     mutateMessageEmotion: (params) => {
@@ -126,6 +116,7 @@ export const RoomDetail = forwardRef(function RoomChild(
     sendMessage({
       params: { ...val, roomId: roomId },
       onSuccess: (data) => {
+        onSendMessage?.(data)
         if (socket) {
           socket.emit("send_message", data)
         }
@@ -146,28 +137,32 @@ export const RoomDetail = forwardRef(function RoomChild(
   }
 
   return (
-    <div className="flex flex-col flex-1 chat-message">
+    <div className="flex flex-col flex-1 chat-message ">
       {data === undefined && error === undefined ? (
         <Spinner />
       ) : (
         <>
-          <div className="h-[46px] mb-12">
+          <div className="h-[60px] mb-12 px-16 py-12">
             <RoomHeader data={data as any} />
           </div>
 
-          <div className="flex-1">
-            {messages?.data?.length ? (
-              <Message
-                onLikeMessage={handleLikeMessage}
-                onUnlikeMessage={handleUnlikeMessage}
-                data={messages}
-              />
-            ) : (
-              <p>Chưa có tin nhắn nào</p>
-            )}
-          </div>
+          <div className="pl-24 pt-12 pr-12 flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col">
+              {messages?.data?.length ? (
+                <Message
+                  onLikeMessage={handleLikeMessage}
+                  onUnlikeMessage={handleUnlikeMessage}
+                  data={messages}
+                />
+              ) : (
+                <div className="text-sm text-gray-color-3 flex-center py-24 min-h-[300px]">
+                  Chưa có tin nhắn nào
+                </div>
+              )}
+            </div>
 
-          <MessageForm roomId={roomId} ref={messageFormRef} onSubmit={handleSendMessage} />
+            <MessageForm roomId={roomId} ref={messageFormRef} onSubmit={handleSendMessage} />
+          </div>
         </>
       )}
     </div>

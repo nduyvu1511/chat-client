@@ -1,4 +1,11 @@
-import { CompoundingType, OptionModel, ResponseStatus, TimeType } from "@/models"
+import {
+  CompoundingType,
+  LastMessage,
+  MessageRes,
+  OptionModel,
+  ResponseStatus,
+  TimeType,
+} from "@/models"
 import _ from "lodash"
 import moment from "moment"
 import { LatLng } from "use-places-autocomplete"
@@ -349,4 +356,26 @@ export const getActiveStringOrListString = (
   }
 
   return false
+}
+
+export const getLastMessage = (params: MessageRes): LastMessage => {
+  let message_text = params?.message_text || ""
+  if (params) {
+    if (params.attachments?.length) {
+      message_text = "Hình ảnh"
+    } else if (params?.tags?.length) {
+      message_text = "Tin nhắn nhanh"
+    } else if (params?.location) {
+      message_text = "Tọa độ"
+    }
+  }
+
+  return {
+    author_name: params.author.author_name || "",
+    created_at: params.created_at,
+    is_author: params.is_author,
+    message_id: params.message_id,
+    message_text,
+    room_id: params.room_id,
+  }
 }

@@ -1,38 +1,40 @@
-import { ChangeStatusOfRoom, LastMessage, ListRes, RoomRes, UseQueryListRes } from "@/models"
+import { getLastMessage } from "@/helper"
+import { ChangeStatusOfRoom, ListRes, MessageRes, RoomRes } from "@/models"
 import { chatApi } from "@/services"
+import { AxiosResponse } from "axios"
 import produce from "immer"
-import { useQueryList } from "./useQueryList"
+import { useState } from "react"
+import useSWR, { KeyedMutator } from "swr"
 
-type UseRoomRes = UseQueryListRes<ListRes<RoomRes[]>> & {
-  messageUnreadhandler: (_: LastMessage) => void
+type UseRoomRes = {
+  data: ListRes<RoomRes[]> | undefined
+  hasMore: boolean
+  mutate: KeyedMutator<ListRes<RoomRes[]>>
+  isFetchingMore: boolean
+  isValidating: boolean
+  messageUnreadhandler: (_: MessageRes) => void
   changeStatusOfRoom: (_: ChangeStatusOfRoom) => void
-  increaseMessageUnread: (_: LastMessage) => void
-  appendLastMessage: (_: LastMessage) => void
-  setCurrentRoomToFirstOrder: (_: LastMessage) => void
+  increaseMessageUnread: (_: MessageRes) => void
+  appendLastMessage: (_: MessageRes) => void
+  changeOrderAndAppendLastMessage: (_: MessageRes) => void
   clearMessagesUnreadFromRoom: (room_id: string) => void
+  fetchMoreRooms: () => void
 }
 
-export const useRoom = (roomId?: string): UseRoomRes => {
-  const {
-    isValidating,
-    mutate,
-    data,
-    error,
-    fetchMoreItem,
-    filterList,
-    hasMore,
-    isFetchingMore,
-    isInitialLoading,
-    offset,
-  } = useQueryList<ListRes<RoomRes[]>>({
-    fetcher: chatApi.getRoomList,
-    initialData: undefined,
-    params: {},
-    key: "get_room_list",
-    limit: 30,
-  })
+const LIMIT = 30
 
-  const messageUnreadhandler = (params: LastMessage) => {
+export const useRoom = (roomId?: string): UseRoomRes => {
+  const { isValidating, mutate, data, error } = useSWR<ListRes<RoomRes[]>>("get_room_list", () =>
+    chatApi.getRoomList({ limit: LIMIT }).then((res: AxiosResponse<ListRes<RoomRes[]>>) => {
+      setHasMore(res.data?.has_more || false)
+      return res.data
+    })
+  )
+
+  const [hasMore, setHasMore] = useState<boolean>(false)
+  const [isFetchingMore, setFetchingMore] = useState<boolean>(false)
+
+  const messageUnreadhandler = (params: MessageRes) => {
     if (!data?.data?.length) return
 
     const index = getRoomIndex(params.room_id)
@@ -40,19 +42,48 @@ export const useRoom = (roomId?: string): UseRoomRes => {
 
     if (roomId !== params.room_id) {
       increaseMessageUnread(params, (message_unread_count) => {
+        const lastMessage = getLastMessage(params)
         mutate(
           produce(data, (draft) => {
             const room = { ...draft.data[index], last_message: params }
             if (data.data?.[0]?.room_id === params.room_id) {
-              draft.data[index] = { ...room, message_unread_count }
+              draft.data[index] = { ...room, message_unread_count, last_message: lastMessage }
             } else {
               const newRooms = draft.data.filter((item) => item.room_id !== params.room_id)
-              draft.data = [{ ...room, message_unread_count }, ...newRooms]
+              draft.data = [
+                { ...room, message_unread_count, last_message: lastMessage },
+                ...newRooms,
+              ]
             }
           }),
           false
         )
       })
+    }
+  }
+
+  const fetchMoreRooms = async () => {
+    if (!data?.data?.length) return
+
+    try {
+      setFetchingMore(true)
+      const res: AxiosResponse<ListRes<RoomRes[]>> = await chatApi.getRoomList({
+        limit: LIMIT,
+        offset: (data?.offset || 0) + LIMIT,
+      })
+      const dataRes = res.data
+      setFetchingMore(false)
+      setHasMore(dataRes?.has_more)
+      mutate(
+        produce(data, (draft) => {
+          ;(draft.has_more = dataRes.has_more), (draft.limit = dataRes.limit)
+          draft.offset = dataRes.offset
+          draft.data = draft.data.concat(dataRes.data)
+        }),
+        false
+      )
+    } catch (error) {
+      setFetchingMore(false)
     }
   }
 
@@ -67,7 +98,7 @@ export const useRoom = (roomId?: string): UseRoomRes => {
   }
 
   const increaseMessageUnread = async (
-    params: LastMessage,
+    params: MessageRes,
     cb?: (_: number) => void,
     onErr?: Function
   ) => {
@@ -104,31 +135,43 @@ export const useRoom = (roomId?: string): UseRoomRes => {
     } catch (error) {}
   }
 
-  const appendLastMessage = (params: LastMessage) => {
+  const appendLastMessage = (params: MessageRes) => {
     if (!data?.data?.length) return
 
     mutate(
       produce(data, (draft) => {
         const index = getRoomIndex(params.room_id)
         if (index === -1) return
-        draft.data[index].last_message = params
+        draft.data[index].last_message = getLastMessage(params)
       }),
       false
     )
   }
 
-  const setCurrentRoomToFirstOrder = (params: LastMessage) => {
+  const changeOrderAndAppendLastMessage = (params: MessageRes) => {
     if (!data?.data?.length) return
-    if (data?.data?.[0]?.room_id === params.room_id) return
-    mutate(
-      produce(data, (draft) => {
-        const newRooms = draft.data.filter((item) => item.room_id !== params.room_id)
-        const room = draft.data.find((item) => item.room_id === params.room_id)
-        if (!room) return
-        draft.data = [{ ...room, last_message: params }, ...newRooms]
-      }),
-      false
-    )
+
+    const index = getRoomIndex(params.room_id)
+    if (index === -1) return
+
+    const last_message = getLastMessage(params)
+
+    if (data?.data?.[0]?.room_id === params.room_id) {
+      mutate(
+        produce(data, (draft) => {
+          draft.data[index].last_message = last_message
+        }),
+        false
+      )
+    } else {
+      mutate(
+        produce(data, (draft) => {
+          const newRooms = draft.data.filter((item) => item.room_id !== params.room_id)
+          draft.data = [{ ...draft.data[index], last_message }, ...newRooms]
+        }),
+        false
+      )
+    }
   }
 
   const changeStatusOfRoom = (params: ChangeStatusOfRoom) => {
@@ -165,19 +208,15 @@ export const useRoom = (roomId?: string): UseRoomRes => {
 
   return {
     data,
-    error,
-    fetchMoreItem,
-    filterList,
+    fetchMoreRooms,
     hasMore,
     isFetchingMore,
-    isInitialLoading,
     isValidating,
     mutate,
-    offset,
     appendLastMessage,
     changeStatusOfRoom,
     messageUnreadhandler,
-    setCurrentRoomToFirstOrder,
+    changeOrderAndAppendLastMessage,
     increaseMessageUnread,
     clearMessagesUnreadFromRoom,
   }

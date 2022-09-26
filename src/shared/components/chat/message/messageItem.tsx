@@ -27,7 +27,7 @@ export const MessageItem = ({
       } ${className}`}
     >
       <div
-        className={`relative p-16 rounded-[16px] min-w-[110px] group w-fit ${
+        className={`relative p-16 rounded-[8px] min-w-[110px] group w-fit ${
           data.is_author && data.message_text ? "bg-bg-blue" : "bg-bg"
         }`}
       >
@@ -103,7 +103,7 @@ export const MessageItem = ({
       </div>
 
       {data?.attachments?.length ? (
-        <div className="grid grid-cols-3 gap-8 w-full max-w-[50%]">
+        <div className="grid grid-cols-3 gap-8 w-full max-w-[50%] mt-8">
           {data.attachments.map((item) => (
             <div
               key={item.attachment_id}

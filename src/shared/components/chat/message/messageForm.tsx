@@ -139,8 +139,21 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   return (
     <div
-      className={`flex flex-col ${messageFormData?.attachments?.length ? "h-[240px]" : "h-[78px]"}`}
+      className={`flex flex-col relative ${
+        messageFormData?.attachments?.length ? "h-[240px]" : "h-[78px]"
+      }`}
     >
+      {messageFormData?.attachments?.length ? (
+        <div className="h-[160px]">
+          <ImagePickupPreview
+            showLoading={isUploading}
+            onAdd={handleAddFile}
+            onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
+            data={messageFormData?.attachments || []}
+          />
+        </div>
+      ) : null}
+
       <div className="flex-1 flex items-center">
         <div className="flex-1 mr-16">
           <input
@@ -181,17 +194,6 @@ export const MessageForm = forwardRef(function MessageFormChild(
           </button>
         </div>
       </div>
-
-      {messageFormData?.attachments?.length ? (
-        <div className="">
-          <ImagePickupPreview
-            showLoading={isUploading}
-            onAdd={handleAddFile}
-            onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
-            data={messageFormData?.attachments || []}
-          />
-        </div>
-      ) : null}
     </div>
   )
 })

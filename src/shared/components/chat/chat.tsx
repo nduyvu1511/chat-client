@@ -54,20 +54,20 @@ export const Chat = () => {
 
       // Message listener
       socket.on("receive_message", (data: MessageRes) => {
-        // console.log("receive_message")
-        socket.emit("read_message", data)
+        console.log("receive_message")
         roomDetailRef.current?.appendMessage(data)
         roomRef.current?.appendLastMessage(data)
+        socket.emit("read_message", data)
         confirmReadMessage(data.message_id)
       })
       socket.on("confirm_read_message", (data) => {
         roomDetailRef.current?.changeMesageStatus(data)
-        console.log("confirm_read_message", data)
+        console.log("confirm_read_message")
       })
 
       // Listen to message when you are not in that room
       socket.on("receive_unread_message", (data: MessageRes) => {
-        // console.log("receive_unread_message")
+        console.log("receive_unread_message")
         roomRef.current?.messageUnreadhandler(data)
       })
 
@@ -76,12 +76,14 @@ export const Chat = () => {
         roomDetailRef.current?.mutateMessageEmotion({
           messageId: payload.message_id,
           status: "like",
+          is_author: false,
         })
       })
       socket.on("unlike_message", (payload: UnlikeMessage) => {
         roomDetailRef.current?.mutateMessageEmotion({
           messageId: payload.message_id,
           status: "unlike",
+          is_author: false,
         })
         console.log("unlike message event: ", payload)
       })
@@ -103,6 +105,10 @@ export const Chat = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const handleSendMessage = (params: MessageRes) => {
+    roomRef.current?.changeOrderAndAppendLastMessage(params)
+  }
+
   const handleSelectRoom = (room: RoomRes) => {
     if (roomId === room.room_id) return
 
@@ -122,11 +128,11 @@ export const Chat = () => {
       <aside className="block-element p-24 pr-12 flex flex-col">
         <Room ref={roomRef} roomId={roomId} onSelectRoom={handleSelectRoom} />
       </aside>
-      <div className="block-element pl-24 pt-12 pr-12 pb-0 flex flex-col">
+      <div className="block-element flex flex-col">
         {roomId ? (
-          <RoomDetail ref={roomDetailRef} roomId={roomId} />
+          <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} roomId={roomId} />
         ) : (
-          <div className="flex-1 flex-center text-base">
+          <div className="flex-1 flex-center text-sm text-gray-color-4">
             Chọn cuộc hội thoại để bắt đầu trò chuyện
           </div>
         )}

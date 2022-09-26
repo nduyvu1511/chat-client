@@ -125,6 +125,7 @@ export interface UnlikeMessage {
 export interface MutateMessageEmotion {
   messageId: string
   status: "like" | "unlike"
+  is_author: boolean
 }
 
 export type MessageAttachment = {

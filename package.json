@@ -54,7 +54,7 @@
     "use-places-autocomplete": "^3.0.0",
     "uuid": "^9.0.0",
     "webpack": "^5.70.0",
-    "yarn": "^1.22.18",
+    "yarn": "^1.22.19",
     "yup": "^0.32.11"
   },
   "devDependencies": {
