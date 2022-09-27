@@ -449,6 +449,7 @@ export type UserRes = Pick<
   | "user_name"
   | "updated_at"
 > & {
+  socket_id: string
   user_id: string
   avatar: AttachmentRes
 }

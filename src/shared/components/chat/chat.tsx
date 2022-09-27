@@ -9,7 +9,7 @@ import {
   UnlikeMessage,
   UserData,
 } from "@/models"
-import { setSocketInstance, setTyping } from "@/modules"
+import { setChatProfile, setSocketInstance, setTyping } from "@/modules"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch } from "react-redux"
 import io, { Socket } from "socket.io-client"
@@ -27,7 +27,9 @@ export const Chat = () => {
 
   useEffect(() => {
     // Connect to socket
-    const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string)
+    const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
+      query: { access_token: "" },
+    })
     dispatch(setSocketInstance(socket))
     socketIo.current = socket
     console.log("object")
@@ -38,7 +40,9 @@ export const Chat = () => {
       // Login to socket io to change online status
       const user = await loginToSocket({ socket_id: socket.id })
       if (!user?.user_id) return
+
       socket.emit("login", user)
+      dispatch(setChatProfile(user))
       setConnected(true)
 
       // Listen to status of user who have chat chat

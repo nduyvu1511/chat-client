@@ -1256,6 +1256,10 @@ input[type="number"] {
     &-list {
       max-height: calc(100vh - 200px);
 
+      &-resize {
+        max-height: calc(100vh - 380px);
+      }
+
       & .infinite-scroll-component__outerdiv {
         flex: 1;
         display: flex;

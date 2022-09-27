@@ -48,7 +48,7 @@ export type RoomDetailRes = Omit<
   leader_user_info: RoomMemberRes | null
 }
 
-type RoomType = "group" | "single" | "admin"
+export type RoomType = "group" | "single" | "admin"
 
 export interface RoomMember {
   user_id: string

@@ -1,4 +1,4 @@
-import { UploadIcon } from "@/assets"
+import { CloseThickIcon, UploadIcon } from "@/assets"
 import { Spinner } from "@/components"
 import { MessageAttachment } from "@/models"
 import Image from "next/image"
@@ -11,6 +11,7 @@ interface ImagePickupPreviewProps {
   onAdd?: (_: ChangeEvent<HTMLInputElement>) => void
   size?: number
   showLoading?: boolean
+  onClose?: Function
 }
 
 export const ImagePickupPreview = ({
@@ -19,21 +20,27 @@ export const ImagePickupPreview = ({
   size = 100,
   onAdd,
   showLoading,
+  onClose,
 }: ImagePickupPreviewProps) => {
   return (
-    <div className={`py-16 relative ${showLoading ? "pointer-events-none" : ""}`}>
+    <div className={`pt-8 relative ${showLoading ? "pointer-events-none" : ""}`}>
       {showLoading ? (
         <div className="absolute inset-0 flex-center z-[100] ">
           <Spinner size={30} />
         </div>
       ) : null}
 
-      <p className="flex items-center text-xs mb-12">
-        <span className="text-primary font-semibold w-24 h-24 flex-center rounded-[6px] text-14 bg-bg-primary mr-6">
-          {data.length}
-        </span>
-        <span className="text-blue-8">ảnh được chọn</span>
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="flex items-center text-xs mb-12">
+          <span className="text-primary font-semibold w-24 h-24 flex-center rounded-[6px] text-14 bg-bg-primary mr-6">
+            {data.length}
+          </span>
+          <span className="text-blue-8">ảnh được chọn</span>
+        </p>
+        <button onClick={() => onClose?.()} className="relative top-[-8px]">
+          <CloseThickIcon className="text-gray-color-4 w-[10px]" />
+        </button>
+      </div>
       <div className="flex flex-wrap overflow-y-auto h-[128px]">
         {data.map((item, index) => (
           <div

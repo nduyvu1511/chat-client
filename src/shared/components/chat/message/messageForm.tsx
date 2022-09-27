@@ -1,22 +1,19 @@
-import { ImageIcon, SendIcon } from "@/assets"
+import { Map, Modal } from "@/components"
 import { RootState } from "@/core/store"
-import { isObjectHasValue } from "@/helper"
-import { useAsync } from "@/hooks"
-import {
-  AttachmentRes,
-  MessageAttachment,
-  OnForwaredResetForm,
-  SendMessageData,
-  SendMessageForm,
-} from "@/models"
+import { useClickOutside } from "@/hooks"
+import { MessageAttachment, OnForwaredResetForm, SendMessageData } from "@/models"
 import {
   addMessageAttachment,
   deleteMessageAttachment,
   resetMessageDataInRoom,
   setMessageDataInRoom,
+  setMessageText,
 } from "@/modules"
-import { chatApi } from "@/services"
-import { ChangeEvent, forwardRef, useImperativeHandle } from "react"
+import { Categories } from "emoji-picker-react"
+import dynamic from "next/dynamic"
+import { ChangeEvent, forwardRef, useImperativeHandle, useRef, useState } from "react"
+import { FaRegLaugh } from "react-icons/fa"
+import { MdMyLocation, MdOutlineInsertPhoto } from "react-icons/md"
 import { useDispatch, useSelector } from "react-redux"
 import { notify } from "reapop"
 import { v4 as uuidv4 } from "uuid"
@@ -24,27 +21,60 @@ import { ImagePickupPreview } from "./messageImagePicker"
 
 interface MessageFormProps {
   onSubmit?: (val: SendMessageData) => void
-  onstartTyping?: Function
+  onStartTyping?: Function
   onStopTyping?: Function
   roomId: string
 }
 
+const Picker = dynamic(
+  () => {
+    return import("emoji-picker-react")
+  },
+  { ssr: false }
+)
+
 export const MessageForm = forwardRef(function MessageFormChild(
-  { onSubmit, roomId }: MessageFormProps,
+  { onSubmit, roomId, onStartTyping, onStopTyping }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
-  const { asyncHandler, isLoading: isUploading } = useAsync()
+  const timeout = useRef<any>()
+  const [isTyping, setTyping] = useState<boolean>(false)
+  const emojiRef = useRef<HTMLDivElement>(null)
+  const [showEmoji, setShowEmoji] = useState<boolean>(false)
+  const [showMap, setShowMap] = useState<boolean>(false)
   const dispatch = useDispatch()
   const socket = useSelector((state: RootState) => state.chat.socket)
   const messageFormData = useSelector((state: RootState) =>
     state.chat.messageFormData?.find((item) => item.roomId === roomId)
   )
+  const user = useSelector((state: RootState) => state.chat.profile)
+
+  useClickOutside([emojiRef], () => {
+    setShowEmoji(false)
+  })
 
   useImperativeHandle(ref, () => ({
     onReset() {
       dispatch(resetMessageDataInRoom(roomId))
     },
   }))
+
+  function timeoutFunction() {
+    setTyping(false)
+    user && socket?.emit("stop_typing", { room_id: roomId, user })
+    // onStopTyping?.()
+  }
+
+  const onKeyDownNotEnter = () => {
+    if (isTyping == false) {
+      setTyping(true)
+      user && socket?.emit("start_typing", { room_id: roomId, user })
+      timeout.current = setTimeout(timeoutFunction, 5000)
+    } else {
+      clearTimeout(timeout.current)
+      timeout.current = setTimeout(timeoutFunction, 5000)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!messageFormData) return
@@ -55,52 +85,9 @@ export const MessageForm = forwardRef(function MessageFormChild(
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(setMessageDataInRoom({ data: { ...messageFormData, text: e.target.value }, roomId }))
-
-    // if (!socket) return
-    // if (!isTyping) {
-    //   // socket.emit("start_typing", roomId)
-    //   setTyping(true)
-    // }
-    // const lastTypingTime = new Date().getTime()
-    // const timerLength = 3000
-    // const timeout = setTimeout(() => {
-    //   const timeNow = new Date().getTime()
-    //   const timeDiff = timeNow - lastTypingTime
-    //   if (timeDiff >= timerLength && isTyping) {
-    //     // socket.emit("stop_typing", roomId)
-    //     setTyping(false)
-    //   }
-    // }, timerLength)
+    onKeyDownNotEnter()
+    dispatch(setMessageText({ text: e.target.value, roomId }))
   }
-
-  // const uploadSingleFile = async ({ name, file }: UploadSingleFile) => {
-  //   const formData = new FormData()
-  //   formData.append(name, file)
-
-  //   asyncHandler({
-  //     fetcher: (name === "image" ? chatApi.uploadSingleImage : chatApi.uploadSingleVideo)(formData),
-  //     onSuccess: (data) => {
-  //       console.log(data)
-  //     },
-  //   })
-  // }
-
-  // const uploadMultipleFile = async ({ params: { files, name }, onSuccess }: UploadMultipleFile) => {
-  //   const formData = new FormData()
-  //   files.forEach((item) => {
-  //     formData.append(name, item)
-  //   })
-
-  //   asyncHandler({
-  //     fetcher: (name === "image" ? chatApi.uploadMultipleImage : chatApi.uploadSingleVideo)(
-  //       formData
-  //     ),
-  //     onSuccess: (data) => {
-  //       console.log(data)
-  //     },
-  //   })
-  // }
 
   const handleAddFile = (e: ChangeEvent<HTMLInputElement>) => {
     const attachments = toAttachments(e)
@@ -131,69 +118,125 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   const handleInputFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const attachments = toAttachments(e)
-    if (!attachments) return
-    if (!checkLimitFile(attachments.length)) return
+    if (!attachments || !checkLimitFile(attachments.length)) return
 
-    dispatch(setMessageDataInRoom({ data: { attachments }, roomId }))
+    dispatch(setMessageDataInRoom({ data: { ...messageFormData, attachments }, roomId }))
   }
 
   return (
-    <div
-      className={`flex flex-col relative ${
-        messageFormData?.attachments?.length ? "h-[240px]" : "h-[78px]"
-      }`}
-    >
-      {messageFormData?.attachments?.length ? (
-        <div className="h-[160px]">
-          <ImagePickupPreview
-            showLoading={isUploading}
-            onAdd={handleAddFile}
-            onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
-            data={messageFormData?.attachments || []}
-          />
-        </div>
-      ) : null}
+    <>
+      <div
+        className={`flex flex-col relative ${
+          messageFormData?.attachments?.length ? "h-[78px]" : "h-[78px]"
+        }`}
+      >
+        {messageFormData?.attachments?.length ? (
+          <div className="h-[160px] absolute top-[-160px] left-0 right-0 bg-white-color">
+            <ImagePickupPreview
+              onClose={() =>
+                dispatch(
+                  setMessageDataInRoom({ data: { ...messageFormData, attachments: [] }, roomId })
+                )
+              }
+              onAdd={handleAddFile}
+              onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
+              data={messageFormData?.attachments || []}
+            />
+          </div>
+        ) : null}
 
-      <div className="flex-1 flex items-center">
-        <div className="flex-1 mr-16">
-          <input
-            onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
-            onChange={handleChange}
-            value={messageFormData?.text || ""}
-            type="text"
-            placeholder="Nhập tin nhắn"
-            className="form-input border-none bg-gray-05 h-full w-full text-sm text-gray-color-4 message-form-input"
-          />
-        </div>
+        {showEmoji ? (
+          <div ref={emojiRef} className="absolute top-[-390px] z-[100] left-0 w-[300px]">
+            <Picker
+              categories={[
+                { category: Categories.SUGGESTED, name: "Gợi ý" },
+                { category: Categories.SMILEYS_PEOPLE, name: "Cảm xúc" },
+                { category: Categories.TRAVEL_PLACES, name: "Địa điểm" },
+                { category: Categories.SYMBOLS, name: "Ký tự" },
+                { category: Categories.FOOD_DRINK, name: "Ăn uống" },
+                { category: Categories.OBJECTS, name: "Đối tượng" },
+              ]}
+              onEmojiClick={({ emoji }) => {
+                const text = `${messageFormData?.text || ""} ${emoji} `
+                dispatch(setMessageText({ text, roomId }))
+              }}
+              height={400}
+              width={340}
+            />
+          </div>
+        ) : null}
 
-        <div className={`flex items-center ${isUploading ? "pointer-events-none" : ""}`}>
-          <input
-            onChange={handleInputFileChange}
-            hidden
-            type="file"
-            name=""
-            multiple
-            id="message-attachment"
-            accept="image/*"
-          />
-          <label
-            className="w-[40px] h-[40px] rounded-[8px] flex-center cursor-pointer mr-16 bg-gray-05"
-            htmlFor="message-attachment"
-            id="message-attachment"
-          >
-            <ImageIcon className="text-primary pointer-events-none" />
-          </label>
+        <div className="flex-1 flex items-center">
+          <div className="flex-1 mr- relative mr-16">
+            <button
+              onClick={() => setShowEmoji(true)}
+              className="w-[40px] h-[40px] rounded-[5px] flex-center absolute-vertical left-4"
+            >
+              <FaRegLaugh className="text-lg text-gray-color-3" />
+            </button>
+
+            <input
+              onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
+              onChange={handleChange}
+              value={messageFormData?.text || ""}
+              type="text"
+              placeholder="Nhập tin nhắn"
+              className="form-input border-none bg-gray-05 pl-[48px] h-full w-full text-sm text-gray-color-4 message-form-input"
+            />
+          </div>
 
           <button
-            className={`w-[40px] h-[40px] rounded-[8px] flex-center ${
-              !isObjectHasValue(messageFormData) ? "btn-disabled" : "bg-primary"
-            }`}
-            onClick={handleSubmit}
+            onClick={() => setShowMap(true)}
+            className="w-[40px] h-[40px] rounded-[8px] hover:bg-gray-10 duration-150 transition-colors bg-gray-05 flex-center mr-8"
           >
-            <SendIcon className="text-white-color" />
+            <MdMyLocation />
           </button>
+
+          <div className={`flex items-center ${false ? "pointer-events-none" : ""}`}>
+            <input
+              onChange={handleInputFileChange}
+              hidden
+              type="file"
+              name=""
+              multiple
+              id="message-attachment"
+              accept="image/*"
+            />
+            <label
+              className="w-[40px] h-[40px] hover:bg-gray-10 mr-8 duration-150 transition-colors rounded-[8px] flex-center cursor-pointer bg-gray-05"
+              htmlFor="message-attachment"
+              id="message-attachment"
+            >
+              <MdOutlineInsertPhoto className="text-gray-color-3 pointer-events-none w-[20px] h-[20px]" />
+            </label>
+
+            <button
+              className={`w-[40px] h-[40px] rounded-[8px] flex-center hover:bg-gray-10 bg-gray-05 duration-150 text-sm font-semibold transition-colors ${
+                !messageFormData?.text &&
+                !messageFormData?.tags?.length &&
+                !messageFormData?.attachments?.length
+                  ? "pointer-events-none btn-disabled opacity-30"
+                  : "text-primary"
+              }`}
+              onClick={handleSubmit}
+            >
+              Gửi
+              {/* <SendIcon className="text-white-color" /> */}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showMap ? (
+        <Modal heading="Xác nhận vị trí để gửi" onClose={() => setShowMap(false)} show={true}>
+          <Map
+            onChooseLocation={(location) => {
+              console.log(location)
+              setShowMap(false)
+            }}
+          />
+        </Modal>
+      ) : null}
+    </>
   )
 })

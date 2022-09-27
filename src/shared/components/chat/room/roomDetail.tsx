@@ -7,6 +7,7 @@ import {
   OnResetParams,
   RoomDetailFunctionHandler,
   RoomDetailRes,
+  RoomType,
   SendMessageData,
   UnlikeMessage,
 } from "@/models"
@@ -142,7 +143,7 @@ export const RoomDetail = forwardRef(function RoomChild(
         <Spinner />
       ) : (
         <>
-          <div className="h-[60px] mb-12 px-16 py-12">
+          <div className="h-[60px] mb-12 px-24 py-16">
             <RoomHeader data={data as any} />
           </div>
 
@@ -150,6 +151,7 @@ export const RoomDetail = forwardRef(function RoomChild(
             <div className="flex-1 flex flex-col">
               {messages?.data?.length ? (
                 <Message
+                  roomType={data?.room_type as RoomType}
                   onLikeMessage={handleLikeMessage}
                   onUnlikeMessage={handleUnlikeMessage}
                   data={messages}
@@ -161,7 +163,13 @@ export const RoomDetail = forwardRef(function RoomChild(
               )}
             </div>
 
-            <MessageForm roomId={roomId} ref={messageFormRef} onSubmit={handleSendMessage} />
+            <MessageForm
+              // onStartTyping={() => console.log("start typing")}
+              // onStopTyping={() => console.log("stop typing")}
+              roomId={roomId}
+              ref={messageFormRef}
+              onSubmit={handleSendMessage}
+            />
           </div>
         </>
       )}

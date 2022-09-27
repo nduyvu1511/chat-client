@@ -1,4 +1,4 @@
-import { ImageWithId, MessageAttachment, MessageForm, MessageFormData, PayloadType } from "@/models"
+import { MessageAttachment, MessageForm, MessageFormData, PayloadType, UserRes } from "@/models"
 import { createSlice } from "@reduxjs/toolkit"
 import { Socket } from "socket.io-client"
 
@@ -6,12 +6,14 @@ interface ChatSlice {
   isTyping: boolean
   socket: Socket<any> | undefined
   messageFormData: MessageFormData[]
+  profile: UserRes | undefined
 }
 
 const initialState: ChatSlice = {
   isTyping: false,
   socket: undefined,
   messageFormData: [],
+  profile: undefined,
 }
 
 const chatSlice = createSlice({
@@ -65,6 +67,19 @@ const chatSlice = createSlice({
       }
     },
 
+    setMessageText: (state, { payload }: PayloadType<{ text: string; roomId: string }>) => {
+      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+      if (index === -1) {
+        state.messageFormData.push({ roomId: payload.roomId, text: payload.text })
+      } else {
+        state.messageFormData[index].text = payload.text
+      }
+    },
+
+    setChatProfile: (state, { payload }: PayloadType<UserRes>) => {
+      state.profile = payload
+    },
+
     deleteMessageAttachment: (
       state,
       { payload }: PayloadType<{ imageId: string; roomId: string }>
@@ -87,4 +102,6 @@ export const {
   setMessageDataInRoom,
   addMessageAttachment,
   deleteMessageAttachment,
+  setMessageText,
+  setChatProfile,
 } = chatSlice.actions
