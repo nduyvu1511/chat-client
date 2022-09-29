@@ -1,5 +1,5 @@
 import { AttachmentId, AttachmentRes, ListRes, QueryCommonParams } from "./common"
-import { MessageRes, MutateMessageEmotion } from "./message"
+import { MessageRes, mutateMessageReaction } from "./message"
 import { IUser, UserData } from "./user"
 
 export interface IRoom {
@@ -137,7 +137,8 @@ export interface RoomDetailFunctionHandler {
   appendMessage: (_: MessageRes) => void
   changeStatusOfRoom: (_: ChangeStatusOfRoom) => void
   changeMesageStatus: (_: MessageRes) => void
-  mutateMessageEmotion: (_: MutateMessageEmotion) => void
+  mutateWithMessageRes: (_: MessageRes) => void
+  mutatePartnerReactionMessage: (_: MessageRes) => void
 }
 
 export interface AddMessageUnreadToRoomRes {
@@ -150,4 +151,10 @@ export interface ClearMessageUnread {
 
 export interface AddMessageUnread {
   message_id: string
+}
+
+export interface RoomTypingRes {
+  user_id: string
+  user_name: string
+  room_id: string
 }

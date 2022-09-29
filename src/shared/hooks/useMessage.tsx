@@ -1,11 +1,12 @@
-import { MESSAGES_LIMIT } from "@/helper"
+import { RootState } from "@/core/store"
+import { LIMIT_MESSAGES } from "@/helper"
 import {
   AttachmentRes,
   LikeMessage,
   LikeMessageRes,
   ListRes,
   MessageRes,
-  MutateMessageEmotion,
+  mutateMessageReaction,
   SendMessage,
   SendMessageData,
   UnlikeMessage,
@@ -15,12 +16,15 @@ import {
 import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import produce from "immer"
+import { useState } from "react"
+import { useSelector } from "react-redux"
 import useSWR from "swr"
 import { v4 as uuidv4 } from "uuid"
 
 interface UseMessageRes {
   data: ListRes<MessageRes[]> | undefined
   isValidating: boolean
+  isFetchingMore: boolean
   isFirstLoading: boolean
   getMoreMessages: Function
   sendMessage: (params: UseParams<SendMessageData, MessageRes>) => void
@@ -29,7 +33,9 @@ interface UseMessageRes {
   confirmReadAllMessageInRoom: (params: string) => void
   likeMessage: (params: LikeMessage, cb?: (params: LikeMessageRes) => void) => void
   unlikeMessage: (params: UnlikeMessage, cb?: (params: UnlikeMessage) => void) => void
-  mutateMessageEmotion: (_: MutateMessageEmotion) => void
+  mutateMessageReaction: (_: mutateMessageReaction) => void
+  mutateByMessageRes: (message: MessageRes) => void
+  mutatePartnerReactionMessage: (message: MessageRes) => void
 }
 
 interface UseMessageProps {
@@ -38,6 +44,9 @@ interface UseMessageProps {
 }
 
 export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessageRes => {
+  const userInfo = useSelector((state: RootState) => state.chat.profile)
+  const [isFetchingMore, setFetchingMore] = useState<boolean>(false)
+
   const { isValidating, mutate, data, error } = useSWR<ListRes<MessageRes[]>>(
     roomId ? `get_messages_in_room_${roomId}` : null,
     null,
@@ -47,16 +56,41 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     }
   )
 
-  const getMoreMessages = async (roomId: string) => {
-    if (!roomId) return
+  const getMoreMessages = async () => {
+    if (isFetchingMore || !roomId || !data) return
     try {
-      const res = await chatApi.getMessagesInRoom({
-        offset: 0,
-        limit: MESSAGES_LIMIT,
+      setFetchingMore(true)
+      const res: AxiosResponse<ListRes<MessageRes[]>> = await chatApi.getMessagesInRoom({
+        offset: (data?.offset || 0) + LIMIT_MESSAGES,
+        limit: LIMIT_MESSAGES,
         room_id: roomId,
       })
+
+      setTimeout(() => {
+        setFetchingMore(false)
+      }, 100)
+
+      const messagesData = res?.data
+
+      mutate(
+        produce(data, (draft) => {
+          draft.offset += LIMIT_MESSAGES
+          draft.has_more = messagesData.has_more
+          draft.data = [...(messagesData?.data || []), ...draft.data]
+        }),
+        false
+      )
+      const lastMessageId = messagesData?.data?.[messagesData?.data?.length - 1]?.message_id
+
+      if (lastMessageId)
+        setTimeout(() => {
+          document.querySelector(`.message-item-${lastMessageId}`)?.scrollIntoView()
+        }, 0)
     } catch (error) {
       console.log(error)
+      setTimeout(() => {
+        setFetchingMore(false)
+      }, 100)
     }
   }
 
@@ -97,27 +131,28 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     return {
       author: {
         author_avatar: {
-          attachment_id: "test",
+          attachment_id: userInfo?.avatar?.attachment_id || "",
           attachment_type: "image",
-          thumbnail_url: "",
-          url: "",
+          thumbnail_url: userInfo?.avatar?.thumbnail_url || "",
+          url: userInfo?.avatar?.url || "",
         },
-        author_id: "test",
-        author_name: "later on",
+        author_id: userInfo?.user_id || "",
+        author_name: userInfo?.user_name || "",
       },
       attachments,
       created_at: new Date(),
       is_author: true,
-      is_liked: false,
       is_read: true,
-      like_count: 0,
+      reaction_count: 0,
       message_id: uuidv4(),
       message_text: data?.text || null,
       room_id: data.roomId,
       location: null,
-      reply_to: null,
+      reply_to: data?.reply_to || null,
       tags: data?.tags || [],
       status: "pending",
+      reactions: [],
+      your_reaction: null,
     }
   }
 
@@ -144,7 +179,9 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       room_id: data.roomId,
       attachment_ids,
       location: data?.location,
-      reply_to: data?.reply_to,
+      reply_to: data?.reply_to
+        ? { message_id: data.reply_to.message_id, attachment_id: data.reply_to?.attachment?.id }
+        : undefined,
       tag_ids: data?.tags?.map((item) => item.tag_id) || undefined,
       text: data?.text,
     }
@@ -154,6 +191,9 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     const { onSuccess, params, onError } = _
     const messageRes = createMessageRes(params)
     appendMessage(messageRes)
+    setTimeout(() => {
+      document.querySelector(`.message-item-${messageRes.message_id}`)?.scrollIntoView()
+    }, 0)
 
     try {
       const messageParams = await getMessage(params)
@@ -201,22 +241,81 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     }
   }
 
-  const mutateMessageEmotion = ({ messageId, status, is_author }: MutateMessageEmotion) => {
+  const mutateByMessageRes = (message: MessageRes) => {
     if (!data?.data?.length) return
-    const index = findMessageIndex(messageId)
+    const index = findMessageIndex(message.message_id)
     if (!index) return
 
     mutate(
       produce(data, (draft) => {
-        if (status === "like") {
-          if (is_author) {
-            draft.data[index].is_liked = true
+        draft.data[index] = { ...message, is_author: draft.data[index].is_author }
+      }),
+      false
+    )
+  }
+
+  const mutatePartnerReactionMessage = (message: MessageRes) => {
+    if (!data?.data?.length) return
+    const index = findMessageIndex(message.message_id)
+    if (!index) return
+
+    mutate(
+      produce(data, (draft) => {
+        draft.data[index].reactions = message.reactions
+        draft.data[index].reaction_count = message.reaction_count
+      }),
+      false
+    )
+  }
+
+  const mutateMessageReaction = ({
+    messageId,
+    reaction,
+    is_author,
+    type,
+  }: mutateMessageReaction) => {
+    if (!data?.data?.length) return
+    const index = findMessageIndex(messageId)
+    if (!index) return
+
+    const message = data.data[index]
+
+    mutate(
+      produce(data, (draft) => {
+        const messageDraft = draft.data[index]
+
+        if (type === "add") {
+          if (!message.your_reaction) {
+            messageDraft.reaction_count += 1
+            messageDraft.reactions.push(reaction)
           }
 
-          draft.data[index].like_count += 1
+          if (message.your_reaction !== reaction) {
+            console.log("your reaction diff")
+            messageDraft.your_reaction = reaction
+
+            const _index = message.reactions?.findIndex((e) => e === message.your_reaction)
+            if (_index !== -1) {
+              messageDraft.reactions[_index] = reaction
+            }
+          }
         } else {
-          draft.data[index].like_count -= 1
-          draft.data[index].is_liked = false
+          if (message.reaction_count > 0) {
+            messageDraft.reaction_count -= 1
+          }
+
+          const _index = message.reactions?.findIndex((e) => e === reaction)
+          if (_index !== -1) {
+            messageDraft.reactions = messageDraft.reactions
+              .slice(0, _index)
+              .concat(messageDraft.reactions.slice(_index + 1))
+          }
+
+          messageDraft.reactions = messageDraft.reactions.filter((e) => e !== reaction)
+
+          if (is_author) {
+            messageDraft.your_reaction = null
+          }
         }
       }),
       false
@@ -224,27 +323,39 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
   }
 
   const unlikeMessage = async (params: UnlikeMessage, cb?: (_: UnlikeMessageRes) => void) => {
+    mutateMessageReaction({
+      messageId: params.message_id,
+      reaction: params.reaction,
+      is_author: true,
+      type: "delete",
+    })
+
     const res: AxiosResponse<UnlikeMessageRes> = await chatApi.unlikeMessage(params.message_id)
 
     if (res?.success) {
       cb?.(res.data)
-      mutateMessageEmotion({ messageId: res.data.message_id, status: "unlike", is_author: true })
     }
   }
 
   const likeMessage = async (params: LikeMessage, cb?: (_: LikeMessageRes) => void) => {
+    mutateMessageReaction({
+      messageId: params.message_id,
+      reaction: params.emotion,
+      is_author: true,
+      type: "add",
+    })
+
     const res: AxiosResponse<LikeMessageRes> = await chatApi.likeMessage(params)
 
     if (res?.success) {
       cb?.(res.data)
-      mutateMessageEmotion({ messageId: res.data.message_id, status: "like", is_author: true })
     }
   }
 
   return {
     data,
     getMoreMessages,
-    isFirstLoading: error === undefined && data === undefined,
+    isFetchingMore,
     isValidating,
     sendMessage,
     appendMessage,
@@ -252,6 +363,9 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     confirmReadAllMessageInRoom,
     likeMessage,
     unlikeMessage,
-    mutateMessageEmotion,
+    mutateMessageReaction,
+    isFirstLoading: error === undefined && data === undefined,
+    mutateByMessageRes,
+    mutatePartnerReactionMessage,
   }
 }

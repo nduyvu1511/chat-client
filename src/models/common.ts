@@ -281,4 +281,4 @@ export interface UploadMultipleFile {
   onSuccess?: (data: AttachmentRes) => void
 }
 
-export type ResponseStatus = "pending" | "rejected" | "fulfilled"
+export type MessageResponseStatus = "pending" | "rejected" | "fulfilled"

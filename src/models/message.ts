@@ -1,14 +1,12 @@
 import {
   AttachmentRes,
   IAttachment,
-  ImageWithId,
   Lnglat,
+  MessageResponseStatus,
   QueryCommonParams,
-  ResponseStatus,
   TagRes,
 } from "./common"
-import { LatLng } from "./location"
-import { IUser } from "./user"
+import { IUser, UserRes } from "./user"
 
 export interface IMessage {
   _id: string
@@ -28,7 +26,7 @@ export interface IMessage {
   is_edited: boolean
   liked_by_user_ids: {
     user_id: string
-    emotion: MessageEmotionType
+    emotion: MessageReactionType
   }[]
   created_at: Date
   updated_at: Date
@@ -38,15 +36,20 @@ export type MessageRes = Pick<IMessage, "room_id" | "created_at"> & {
   message_id: string
   is_author: boolean
   author: AuthorMessage
-  is_liked: boolean
   attachments: AttachmentRes[]
-  like_count: number
+  reaction_count: number
+  reactions: MessageReactionType[]
+  your_reaction: null | MessageReactionType
   message_text: string | null
   reply_to?: MessageReply | null
   location?: Lnglat | null
   tags?: TagRes[]
   is_read: boolean
-  status?: ResponseStatus
+  status?: MessageResponseStatus
+}
+
+export interface UsersLikedMessageRes {
+  [key: string]: UserRes[]
 }
 
 export type AttachmentType = "image" | "video" | "voice"
@@ -66,12 +69,15 @@ export interface MessageUser {
 export type MessageReply = {
   author: AuthorMessage
   message_id: string
+  attachment?: {
+    id: string
+    url: string
+  }
   message_text: string
   created_at: Date
-  attachment?: AttachmentRes | null
 }
 
-export type MessageEmotionType = "like" | "angry" | "sad" | "laugh" | "heart" | "wow"
+export type MessageReactionType = "like" | "angry" | "sad" | "laugh" | "heart" | "wow"
 
 export type SendMessage = {
   tag_ids?: string[]
@@ -105,7 +111,7 @@ export interface GetMessagesInRoom extends QueryCommonParams {
 
 export interface LikeMessage {
   message_id: string
-  emotion: MessageEmotionType
+  emotion: MessageReactionType
 }
 
 export interface LikeMessageRes extends LikeMessage {
@@ -120,12 +126,14 @@ export interface UnlikeMessageRes extends UnlikeMessage {
 
 export interface UnlikeMessage {
   message_id: string
+  reaction: MessageReactionType
 }
 
-export interface MutateMessageEmotion {
+export interface mutateMessageReaction {
   messageId: string
-  status: "like" | "unlike"
+  reaction: MessageReactionType
   is_author: boolean
+  type: "add" | "delete"
 }
 
 export type MessageAttachment = {
@@ -141,4 +149,7 @@ export interface MessageForm {
   text?: string | undefined
 }
 
-export type MessageFormData = MessageForm & { roomId: string }
+export type MessageFormData = MessageForm & {
+  roomId: string
+  reply_to?: MessageReply
+}

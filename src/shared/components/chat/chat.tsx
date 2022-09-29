@@ -1,15 +1,14 @@
 import { Spinner } from "@/components"
 import { useChat } from "@/hooks"
 import {
-  LikeMessage,
   MessageRes,
   RoomDetailFunctionHandler,
   RoomFunctionHandler,
   RoomRes,
-  UnlikeMessage,
+  RoomTypingRes,
   UserData,
 } from "@/models"
-import { setChatProfile, setSocketInstance, setTyping } from "@/modules"
+import { setChatProfile, setSocketInstance, setCurrentTyping } from "@/modules"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch } from "react-redux"
 import io, { Socket } from "socket.io-client"
@@ -32,7 +31,7 @@ export const Chat = () => {
     })
     dispatch(setSocketInstance(socket))
     socketIo.current = socket
-    console.log("object")
+
     socket.on("connect", async () => {
       if (!socket.id) return
 
@@ -60,7 +59,7 @@ export const Chat = () => {
       socket.on("receive_message", (data: MessageRes) => {
         console.log("receive_message")
         roomDetailRef.current?.appendMessage(data)
-        roomRef.current?.appendLastMessage(data)
+        roomRef.current?.changeOrderAndAppendLastMessage(data)
         socket.emit("read_message", data)
         confirmReadMessage(data.message_id)
       })
@@ -75,34 +74,28 @@ export const Chat = () => {
         roomRef.current?.messageUnreadhandler(data)
       })
 
-      socket.on("like_message", (payload: LikeMessage) => {
+      socket.on("like_message", (payload: MessageRes) => {
         console.log("like message event: ", payload)
-        roomDetailRef.current?.mutateMessageEmotion({
-          messageId: payload.message_id,
-          status: "like",
-          is_author: false,
-        })
+        roomDetailRef.current?.mutatePartnerReactionMessage(payload)
       })
-      socket.on("unlike_message", (payload: UnlikeMessage) => {
-        roomDetailRef.current?.mutateMessageEmotion({
-          messageId: payload.message_id,
-          status: "unlike",
-          is_author: false,
-        })
+      socket.on("unlike_message", (payload: MessageRes) => {
+        roomDetailRef.current?.mutatePartnerReactionMessage(payload)
         console.log("unlike message event: ", payload)
       })
 
       // Typing listener
-      socket.on("start_typing", () => {
-        dispatch(setTyping(true))
+      socket.on("start_typing", (payload: RoomTypingRes) => {
+        console.log("start_typing", payload)
+        dispatch(setCurrentTyping(payload))
       })
-      socket.on("stop_typing", () => {
-        dispatch(setTyping(false))
+      socket.on("stop_typing", (payload: RoomTypingRes) => {
+        console.log("stop_typing", payload)
+        dispatch(setCurrentTyping(undefined))
       })
     })
 
     return () => {
-      socket.emit("logout", "631ac1558f56544cbc01a26d")
+      // socket.emit("logout", "631ac1558f56544cbc01a26d")
       socket.off("connect")
       socket.off("disconnect")
     }

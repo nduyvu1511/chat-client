@@ -1,3 +1,4 @@
+import { CloseThickIcon } from "@/assets"
 import { Map, Modal } from "@/components"
 import { RootState } from "@/core/store"
 import { useClickOutside } from "@/hooks"
@@ -7,10 +8,12 @@ import {
   deleteMessageAttachment,
   resetMessageDataInRoom,
   setMessageDataInRoom,
+  setMessageReply,
   setMessageText,
 } from "@/modules"
 import { Categories } from "emoji-picker-react"
 import dynamic from "next/dynamic"
+import Image from "next/image"
 import { ChangeEvent, forwardRef, useImperativeHandle, useRef, useState } from "react"
 import { FaRegLaugh } from "react-icons/fa"
 import { MdMyLocation, MdOutlineInsertPhoto } from "react-icons/md"
@@ -21,9 +24,8 @@ import { ImagePickupPreview } from "./messageImagePicker"
 
 interface MessageFormProps {
   onSubmit?: (val: SendMessageData) => void
-  onStartTyping?: Function
-  onStopTyping?: Function
   roomId: string
+  className?: string
 }
 
 const Picker = dynamic(
@@ -34,7 +36,7 @@ const Picker = dynamic(
 )
 
 export const MessageForm = forwardRef(function MessageFormChild(
-  { onSubmit, roomId, onStartTyping, onStopTyping }: MessageFormProps,
+  { onSubmit, roomId, className }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
   const timeout = useRef<any>()
@@ -48,6 +50,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
     state.chat.messageFormData?.find((item) => item.roomId === roomId)
   )
   const user = useSelector((state: RootState) => state.chat.profile)
+  const currentTyping = useSelector((state: RootState) => state.chat.currentTyping)
 
   useClickOutside([emojiRef], () => {
     setShowEmoji(false)
@@ -61,18 +64,27 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   function timeoutFunction() {
     setTyping(false)
-    user && socket?.emit("stop_typing", { room_id: roomId, user })
-    // onStopTyping?.()
+    user &&
+      socket?.emit("stop_typing", {
+        room_id: roomId,
+        user_name: user.user_name,
+        user_id: user.user_id,
+      })
   }
 
   const onKeyDownNotEnter = () => {
     if (isTyping == false) {
       setTyping(true)
-      user && socket?.emit("start_typing", { room_id: roomId, user })
-      timeout.current = setTimeout(timeoutFunction, 5000)
+      user &&
+        socket?.emit("start_typing", {
+          room_id: roomId,
+          user_name: user.user_name,
+          user_id: user.user_id,
+        })
+      timeout.current = setTimeout(timeoutFunction, 3000)
     } else {
       clearTimeout(timeout.current)
-      timeout.current = setTimeout(timeoutFunction, 5000)
+      timeout.current = setTimeout(timeoutFunction, 3000)
     }
   }
 
@@ -126,12 +138,19 @@ export const MessageForm = forwardRef(function MessageFormChild(
   return (
     <>
       <div
-        className={`flex flex-col relative ${
+        className={`flex flex-col bg-white-color relative ${
           messageFormData?.attachments?.length ? "h-[78px]" : "h-[78px]"
-        }`}
+        } ${className || ""}`}
       >
+        {/* Typing */}
+        {currentTyping ? (
+          <div className="absolute left-0 top-[-24px] flex-center px-24 py-4 z-[100] bg-white-color">
+            <p className="text-xs line-clamp-1">{currentTyping?.user_name} đang soạn tin nhắn...</p>
+          </div>
+        ) : null}
+
         {messageFormData?.attachments?.length ? (
-          <div className="h-[160px] absolute top-[-160px] left-0 right-0 bg-white-color">
+          <div className="h-[160px] absolute top-[-160px] z-[100] left-0 right-0 bg-white-color">
             <ImagePickupPreview
               onClose={() =>
                 dispatch(
@@ -142,6 +161,41 @@ export const MessageForm = forwardRef(function MessageFormChild(
               onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
               data={messageFormData?.attachments || []}
             />
+          </div>
+        ) : null}
+
+        {messageFormData?.reply_to ? (
+          <div className="py-12 h-[88px] flex-center absolute top-[-88px] left-0 right-0 bg-white-color z-[100]">
+            <div className="p-12 flex-1 rounded-[8px] relative bg-bg mr-12">
+              <div className="flex items-center">
+                {messageFormData?.reply_to?.attachment?.id ? (
+                  <div className="mr-12 w-[36px] relative overflow-hidden h-[36px] rounded-[2px]">
+                    <Image
+                      src={messageFormData.reply_to.attachment.url}
+                      layout="fill"
+                      alt=""
+                      objectFit="cover"
+                    />
+                  </div>
+                ) : null}
+                <div className="flex-1">
+                  <p className="text-xs mb-8">
+                    Trả lời{" "}
+                    <span className="font-semibold text-primary">
+                      {messageFormData.reply_to.author.author_name}
+                    </span>
+                  </p>
+                  <p className="text-xs line-clamp-1">{messageFormData.reply_to.message_text}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => dispatch(setMessageReply({ data: undefined, roomId }))}
+                className="w-[16px] h-[16px] rounded-[50%] bg-gray-color-2 transition-colors duration-100 hover:bg-primary flex-center absolute right-12 top-12"
+              >
+                <CloseThickIcon className="w-8 h-8 text-white-color" />
+              </button>
+            </div>
           </div>
         ) : null}
 

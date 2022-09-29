@@ -1,27 +1,41 @@
-import { MessageAttachment, MessageForm, MessageFormData, PayloadType, UserRes } from "@/models"
+import {
+  MessageAttachment,
+  MessageForm,
+  MessageFormData,
+  MessageReply,
+  PayloadType,
+  RoomTypingRes,
+  UserRes,
+} from "@/models"
 import { createSlice } from "@reduxjs/toolkit"
 import { Socket } from "socket.io-client"
 
 interface ChatSlice {
-  isTyping: boolean
+  currentTyping: RoomTypingRes | undefined
   socket: Socket<any> | undefined
   messageFormData: MessageFormData[]
   profile: UserRes | undefined
+  currentMessageEmotionModalId: string | undefined
 }
 
 const initialState: ChatSlice = {
-  isTyping: false,
+  currentTyping: undefined,
   socket: undefined,
   messageFormData: [],
   profile: undefined,
+  currentMessageEmotionModalId: undefined,
 }
 
 const chatSlice = createSlice({
   name: "chat_slice",
   initialState,
   reducers: {
-    setTyping: (state, { payload }: PayloadType<boolean>) => {
-      state.isTyping = payload
+    setCurrentTyping: (state, { payload }: PayloadType<RoomTypingRes | undefined>) => {
+      state.currentTyping = payload
+    },
+
+    setCurrentMessageEmotionModalId: (state, { payload }: PayloadType<string | undefined>) => {
+      state.currentMessageEmotionModalId = payload
     },
 
     setSocketInstance: (state, { payload }: PayloadType<Socket<any> | undefined>) => {
@@ -67,6 +81,19 @@ const chatSlice = createSlice({
       }
     },
 
+    setMessageReply: (
+      state,
+      { payload }: PayloadType<{ data: MessageReply | undefined; roomId: string }>
+    ) => {
+      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+
+      if (index === -1) {
+        state.messageFormData.push({ reply_to: payload.data, roomId: payload.roomId })
+      } else {
+        state.messageFormData[index].reply_to = payload.data
+      }
+    },
+
     setMessageText: (state, { payload }: PayloadType<{ text: string; roomId: string }>) => {
       const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
       if (index === -1) {
@@ -96,7 +123,7 @@ const chatSlice = createSlice({
 
 export default chatSlice.reducer
 export const {
-  setTyping,
+  setCurrentTyping,
   setSocketInstance,
   resetMessageDataInRoom,
   setMessageDataInRoom,
@@ -104,4 +131,6 @@ export const {
   deleteMessageAttachment,
   setMessageText,
   setChatProfile,
+  setMessageReply,
+  setCurrentMessageEmotionModalId,
 } = chatSlice.actions

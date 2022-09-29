@@ -13,13 +13,13 @@ export const MessageItemImage = ({ data, onClick, className }: MessageItemImageP
       {data.map((item, index) => (
         <div
           key={item.attachment_id}
-          className={`relative aspect-[4/3] rounded-[5px] overflow-hidden border border-solid border-gray-10 hover:opacity-90 cursor-pointer ${
+          className={`relative aspect-[4/3] rounded-[5px] overflow-hidden ${
+            data.length > 1 ? "border border-solid border-gray-05" : ""
+          } hover:opacity-90 cursor-pointer ${
             data.length - 1 === index
-              ? `${index % 2 === 0 ? "w-full" : "w-[50%]"} `
-              : ` w-[calc(50%-2px)] mb-2 ${index % 2 === 0 ? "mr-2" : ""}`
-          }
-              
-            `}
+              ? `${index % 2 === 0 ? "w-full" : "w-[50%]"}`
+              : `w-[calc(50%-2px)] mb-2 ${index % 2 === 0 ? "mr-2" : ""}`
+          }`}
         >
           <Image layout="fill" alt="" objectFit="cover" src={item.url} />
         </div>

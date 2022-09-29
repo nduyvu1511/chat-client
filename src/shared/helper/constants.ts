@@ -1,4 +1,4 @@
-import { ResponseStatus } from "@/models"
+import { angryIcon, heartIcon, laughIcon, likeIcon, sadIcon, wowIcon } from "@/assets"
 
 // Regex
 export const PHONE_SCHEMA = /((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9]{8})$/
@@ -102,10 +102,17 @@ export const PAYMENT_METHOD_NAME = {
   bank: "Chuyển khoản",
 }
 
-export const MESSAGES_LIMIT = 30
-
 export const MESSAGE_STATUS = {
   pending: "Đang gửi",
   rejected: "Gửi lỗi",
   fulfilled: "Đã gửi",
+}
+
+export const MESSAGE_EMOTION_ICON = {
+  laugh: laughIcon,
+  heart: heartIcon,
+  sad: sadIcon,
+  wow: wowIcon,
+  like: likeIcon,
+  angry: angryIcon,
 }

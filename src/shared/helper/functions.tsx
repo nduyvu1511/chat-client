@@ -3,7 +3,7 @@ import {
   LastMessage,
   MessageRes,
   OptionModel,
-  ResponseStatus,
+  MessageResponseStatus,
   TimeType,
 } from "@/models"
 import _ from "lodash"
@@ -358,24 +358,26 @@ export const getActiveStringOrListString = (
   return false
 }
 
-export const getLastMessage = (params: MessageRes): LastMessage => {
+export const getMessageDescription = (params: MessageRes): string => {
   let message_text = params?.message_text || ""
-  if (params) {
-    if (params.attachments?.length) {
-      message_text = "Hình ảnh"
-    } else if (params?.tags?.length) {
-      message_text = "Tin nhắn nhanh"
-    } else if (params?.location) {
-      message_text = "Tọa độ"
-    }
+  if (params.attachments?.length) {
+    message_text = "Hình ảnh"
+  } else if (params?.tags?.length) {
+    message_text = "Tin nhắn nhanh"
+  } else if (params?.location) {
+    message_text = "Tọa độ"
   }
 
+  return message_text
+}
+
+export const getLastMessage = (params: MessageRes): LastMessage => {
   return {
     author_name: params.author.author_name || "",
     created_at: params.created_at,
     is_author: params.is_author,
     message_id: params.message_id,
-    message_text,
+    message_text: getMessageDescription(params),
     room_id: params.room_id,
   }
 }

@@ -118,6 +118,10 @@ const chatApi = {
     return axiosClient.post("/message", params)
   },
 
+  getMessageById: (msgId: string) => {
+    return axiosClient.get(`/message/${msgId}`)
+  },
+
   getTagMessageList: ({ limit, offset }: QueryCommonParams) => {
     return axiosClient.post(`/tag?limit=${limit}&offset=${offset}`)
   },

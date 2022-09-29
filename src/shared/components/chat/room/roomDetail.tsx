@@ -18,6 +18,7 @@ import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from
 import { useSelector } from "react-redux"
 import useSWR, { mutate } from "swr"
 import { Message, MessageForm } from "../message"
+import { RoomDetailModals } from "./roomDetailModals"
 import { RoomHeader } from "./roomHeader"
 
 type OnForwaredRoomDetail = ForwardedRef<RoomDetailFunctionHandler>
@@ -35,7 +36,6 @@ export const RoomDetail = forwardRef(function RoomChild(
   const messageFormRef = useRef<OnResetParams>(null)
   const {
     data,
-    isValidating,
     error,
     mutate: mutateRoomDetail,
   } = useSWR(
@@ -57,7 +57,10 @@ export const RoomDetail = forwardRef(function RoomChild(
     confirmReadAllMessageInRoom,
     likeMessage,
     unlikeMessage,
-    mutateMessageEmotion,
+    mutateByMessageRes,
+    getMoreMessages,
+    isFetchingMore,
+    mutatePartnerReactionMessage,
   } = useMessage({ roomId, initialData: data?.messages })
 
   useImperativeHandle(ref, () => ({
@@ -88,8 +91,11 @@ export const RoomDetail = forwardRef(function RoomChild(
     changeMesageStatus: async (params) => {
       confirmReadMessage(params)
     },
-    mutateMessageEmotion: (params) => {
-      mutateMessageEmotion(params)
+    mutateWithMessageRes: (params) => {
+      mutateByMessageRes(params)
+    },
+    mutatePartnerReactionMessage: (params) => {
+      mutatePartnerReactionMessage(params)
     },
   }))
 
@@ -125,20 +131,20 @@ export const RoomDetail = forwardRef(function RoomChild(
     })
   }
 
-  const handleLikeMessage = (params: LikeMessage) => {
+  const handleReactionMessage = (params: LikeMessage) => {
     likeMessage(params, (data) => {
       socket && socket.emit("like_message", data)
     })
   }
 
-  const handleUnlikeMessage = (params: UnlikeMessage) => {
+  const handleUndoMesasgeReaction = (params: UnlikeMessage) => {
     unlikeMessage(params, (data) => {
       socket && socket.emit("unlike_message", data)
     })
   }
 
   return (
-    <div className="flex flex-col flex-1 chat-message ">
+    <div className="flex flex-col flex-1 chat-message bg-white-color">
       {data === undefined && error === undefined ? (
         <Spinner />
       ) : (
@@ -147,30 +153,29 @@ export const RoomDetail = forwardRef(function RoomChild(
             <RoomHeader data={data as any} />
           </div>
 
-          <div className="pl-24 pt-12 pr-12 flex-1 flex flex-col">
-            <div className="flex-1 flex flex-col">
-              {messages?.data?.length ? (
-                <Message
-                  roomType={data?.room_type as RoomType}
-                  onLikeMessage={handleLikeMessage}
-                  onUnlikeMessage={handleUnlikeMessage}
-                  data={messages}
-                />
-              ) : (
-                <div className="text-sm text-gray-color-3 flex-center py-24 min-h-[300px]">
-                  Chưa có tin nhắn nào
-                </div>
-              )}
-            </div>
-
-            <MessageForm
-              // onStartTyping={() => console.log("start typing")}
-              // onStopTyping={() => console.log("stop typing")}
-              roomId={roomId}
-              ref={messageFormRef}
-              onSubmit={handleSendMessage}
+          {messages?.data?.length ? (
+            <Message
+              isFetchingMore={isFetchingMore}
+              roomType={data?.room_type as RoomType}
+              onLikeMessage={handleReactionMessage}
+              onUnlikeMessage={handleUndoMesasgeReaction}
+              data={messages}
+              onGetMoreMessage={() => getMoreMessages()}
             />
-          </div>
+          ) : (
+            <div className="text-sm text-gray-color-3 flex-center py-24 min-h-[300px] flex-1">
+              Chưa có tin nhắn nào
+            </div>
+          )}
+
+          <MessageForm
+            className="px-24"
+            roomId={roomId}
+            ref={messageFormRef}
+            onSubmit={handleSendMessage}
+          />
+
+          <RoomDetailModals />
         </>
       )}
     </div>
