@@ -48,8 +48,13 @@ export type MessageRes = Pick<IMessage, "room_id" | "created_at"> & {
   status?: MessageResponseStatus
 }
 
-export interface UsersLikedMessageRes {
-  [key: string]: UserRes[]
+export type UserReactionRes = Omit<UserRes, "avatar"> & {
+  reaction: MessageReactionType
+  avatar: string
+}
+
+export type UsersLikedMessageRes = {
+  [key: string]: UserReactionRes[]
 }
 
 export type AttachmentType = "image" | "video" | "voice"

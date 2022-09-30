@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { NoteIcon2, ReplyIcon, ThreeDotsIcon, TrashIcon } from "@/assets"
+import { EyeShowIcon, NoteIcon2, ReplyIcon, ThreeDotsIcon, TrashIcon } from "@/assets"
 import { useClickOutside } from "@/hooks"
 import { MessageReactionType } from "@/models"
 import { useRef, useState } from "react"
@@ -17,6 +17,7 @@ interface MessageItemOptionProps {
   optionTop?: number
   optionRight?: number
   value?: MessageReactionType | null | undefined
+  onViewDetail?: Function
 }
 
 export const MessageItemOption = ({
@@ -28,6 +29,7 @@ export const MessageItemOption = ({
   className = "",
   optionRight = -8,
   optionTop = -170,
+  onViewDetail,
   value,
 }: MessageItemOptionProps) => {
   const optionRef = useRef<HTMLDivElement>(null)
@@ -51,7 +53,7 @@ export const MessageItemOption = ({
         {showEmotion ? (
           <div
             ref={emotionRef}
-            className="absolute-horizontal top-[-56px] flex items-center border border-solid border-border-color h-[46px] rounded-[25px] bg-white-color p-12 shadow-md"
+            className="absolute-horizontal overflow-hidden top-[-56px] flex items-center border border-solid border-border-color h-[46px] rounded-[25px] bg-white-color p-12 shadow-md"
           >
             {(["like", "heart", "laugh", "sad", "wow", "angry"] as MessageReactionType[]).map(
               (val, index) => (
@@ -64,7 +66,7 @@ export const MessageItemOption = ({
                     }
                     setShowEmotion(false)
                   }}
-                  className={`mr-8 last:mr-0 h-full flex-center`}
+                  className={`p-4 last:mr-0 h-full flex-center`}
                   key={index}
                 >
                   <MessageReactionIcon
@@ -74,7 +76,7 @@ export const MessageItemOption = ({
                   />
 
                   {value === val ? (
-                    <span className="absolute bottom-[-1px] h-1 bg-primary w-[28px] rounded-[4px]"></span>
+                    <span className="absolute bottom-0 h-1 bg-primary w-[24px] rounded-[4px]"></span>
                   ) : null}
                 </button>
               )
@@ -102,12 +104,12 @@ export const MessageItemOption = ({
             <button
               onClick={() => {
                 setShowOption(false)
-                onReply?.()
+                onViewDetail?.()
               }}
               className="flex items-center py-[14px] w-full px-12 hover:bg-bg hover:rounded-[5px]"
             >
-              <ReplyIcon className="mr-8" />
-              <p className="text-sm leading-20 whitespace-nowrap">Phản hồi</p>
+              <EyeShowIcon className="mr-8" />
+              <p className="text-sm leading-20 whitespace-nowrap">Xem chi tiết</p>
             </button>
             <button
               onClick={() => {

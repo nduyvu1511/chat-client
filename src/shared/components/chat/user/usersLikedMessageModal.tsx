@@ -1,10 +1,14 @@
-import { Modal, Spinner, UserProfile } from "@/components"
-import { UsersLikedMessageRes } from "@/models"
-import { setCurrentMessageEmotionModalId } from "@/modules"
+import { blankAvatar } from "@/assets"
+import { ModalSm, Spinner } from "@/components"
+import { MessageReactionType, UserReactionRes, UsersLikedMessageRes } from "@/models"
+import { setCurrentMessageEmotionId } from "@/modules"
 import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
+import { useState } from "react"
 import { useDispatch } from "react-redux"
 import useSWR from "swr"
+import { MessageReactionIcon } from "../message"
+import { UserItem } from "./userItem"
 
 interface Props {
   messageId: string
@@ -12,26 +16,87 @@ interface Props {
 
 export const UsersLikedMessageModal = ({ messageId }: Props) => {
   const dispatch = useDispatch()
-  const { data, isValidating } = useSWR(messageId ? "get_users_liked_message" : null, () =>
-    chatApi
-      .getUsersLikedMessage(messageId)
-      .then((res: AxiosResponse<UsersLikedMessageRes>) => res.data)
+  const { data, error } = useSWR<UsersLikedMessageRes | undefined>(
+    messageId ? `get_users_liked_message_${messageId}` : null,
+    () =>
+      chatApi.getUsersLikedMessage(messageId).then((res: AxiosResponse<UsersLikedMessageRes>) => {
+        const { data } = res
+        setCurrentSelect({ data: data?.["all"] || [], key: "all" })
+        return data
+      })
   )
 
-  console.log(data?.like?.[0])
+  const [currentSelect, setCurrentSelect] = useState<
+    { key: string; data: UserReactionRes[] } | undefined
+  >()
+
+  const closeModal = () => {
+    dispatch(setCurrentMessageEmotionId(undefined))
+  }
+
+  const handleChangeReactions = (key: string) => {
+    setCurrentSelect({
+      key,
+      data: data?.[key] || [],
+    })
+  }
 
   return (
-    <Modal
-      className="h-auto"
-      show={true}
-      heading="Thông tin tài khoản"
-      onClose={() => dispatch(setCurrentMessageEmotionModalId(undefined))}
-    >
-      {isValidating ? (
-        <Spinner className="" size={28} />
-      ) : data?.like?.[0] ? (
-        <UserProfile data={data.like?.[0]} />
-      ) : null}
-    </Modal>
+    <ModalSm className="w-[440px]" onClose={closeModal} title="Chi tiết tin nhắn">
+      <>
+        {data === undefined && error === undefined ? (
+          <Spinner className="py-40" />
+        ) : data ? (
+          <div className="flex-1 bg-gray-05 border-b border-solid border-border-color">
+            <div className="flex items-center border-b border-solid border-border-color px-16">
+              {Object.entries(data).map(([key]) => (
+                <button
+                  key={key}
+                  onClick={() => handleChangeReactions(key)}
+                  className={`mr-16 last:mr-0 relative flex-center py-12 ${
+                    currentSelect?.key === key ? "text-primary" : "text-gray-color-3"
+                  }`}
+                >
+                  {key === "all" ? (
+                    <p className="text-14 font-semibold">Tất cả</p>
+                  ) : (
+                    <MessageReactionIcon
+                      size={22}
+                      emotion_type={key as MessageReactionType}
+                      key={key}
+                    />
+                  )}
+                  <span
+                    className={`text-12 font-semibold ml-4 ${currentSelect?.key === key ? "" : ""}`}
+                  >
+                    {data?.[key]?.length || 0}
+                  </span>
+
+                  {currentSelect?.key === key ? (
+                    <span className="h-1 bg-primary w-full absolute bottom-[-1px] rounded-[20px] left-[-2px]"></span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+            {currentSelect?.data?.length ? (
+              <div className="px-16 py-8 h-[250px] overflow-y-auto">
+                {currentSelect.data.map((item) => (
+                  <UserItem
+                    className="my-10"
+                    key={item.user_id}
+                    data={{
+                      avatar: item?.avatar || blankAvatar,
+                      user_id: item.user_id,
+                      user_name: item.user_name,
+                      reaction: item.reaction,
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </>
+    </ModalSm>
   )
 }

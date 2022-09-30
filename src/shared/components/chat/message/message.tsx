@@ -71,12 +71,13 @@ export const Message = ({
                       </span>
                     </div>
                   ) : null}
+
                   <div
                     className={`flex group ${
                       item?.attachments?.length || item?.location || item?.tags?.length
                         ? "mb-24"
                         : "mb-4"
-                    }`}
+                    } ${isLast ? "mb-16" : ""}`}
                     key={item.message_id}
                     ref={ref}
                   >
@@ -116,13 +117,15 @@ export const Message = ({
                       />
                     </div>
                   </div>
+
+                  {/* {isLast ? <p key={item.message_id} className="mb-10"></p> : null} */}
                 </>
               )
             })
           : null}
       </InfiniteScroll>
 
-      {isFetchingMore ? <Spinner className="py-0" /> : null}
+      {!isFetchingMore ? <Spinner className="py-24" /> : null}
     </div>
   )
 }

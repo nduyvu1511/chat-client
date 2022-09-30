@@ -149,7 +149,7 @@ export const RoomDetail = forwardRef(function RoomChild(
         <Spinner />
       ) : (
         <>
-          <div className="h-[60px] mb-12 px-24 py-16">
+          <div className="h-[60px] border-b border-border-color border-solid">
             <RoomHeader data={data as any} />
           </div>
 
@@ -169,7 +169,7 @@ export const RoomDetail = forwardRef(function RoomChild(
           )}
 
           <MessageForm
-            className="px-24"
+            className="px-24 border-t border-solid border-border-color"
             roomId={roomId}
             ref={messageFormRef}
             onSubmit={handleSendMessage}

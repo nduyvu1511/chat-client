@@ -15,6 +15,8 @@ export const MessageItemImage = ({ data, onClick, className }: MessageItemImageP
           key={item.attachment_id}
           className={`relative aspect-[4/3] rounded-[5px] overflow-hidden ${
             data.length > 1 ? "border border-solid border-gray-05" : ""
+          } ${
+            data?.length === 1 ? "rounded-br-none rounded-bl-none" : ""
           } hover:opacity-90 cursor-pointer ${
             data.length - 1 === index
               ? `${index % 2 === 0 ? "w-full" : "w-[50%]"}`

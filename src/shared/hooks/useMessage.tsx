@@ -142,7 +142,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       attachments,
       created_at: new Date(),
       is_author: true,
-      is_read: true,
+      is_read: false,
       reaction_count: 0,
       message_id: uuidv4(),
       message_text: data?.text || null,

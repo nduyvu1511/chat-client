@@ -90,9 +90,17 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   const handleSubmit = async () => {
     if (!messageFormData) return
-    const { attachments, location, tags, text } = messageFormData
 
+    const { attachments, location, tags, text } = messageFormData
     if (!attachments && !location && !tags && !text) return
+
+    if (user) {
+      socket?.emit("stop_typing", {
+        room_id: roomId,
+        user_name: user.user_name,
+        user_id: user.user_id,
+      })
+    }
     onSubmit?.(messageFormData)
   }
 
@@ -150,7 +158,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
         ) : null}
 
         {messageFormData?.attachments?.length ? (
-          <div className="h-[160px] absolute top-[-160px] z-[100] left-0 right-0 bg-white-color">
+          <div className="h-[160px] absolute top-[-160px] z-[100] left-0 right-0 bg-white-color px-24">
             <ImagePickupPreview
               onClose={() =>
                 dispatch(
@@ -165,8 +173,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
         ) : null}
 
         {messageFormData?.reply_to ? (
-          <div className="py-12 h-[88px] flex-center absolute top-[-88px] left-0 right-0 bg-white-color z-[100]">
-            <div className="p-12 flex-1 rounded-[8px] relative bg-bg mr-12">
+          <div className="px-24 h-[88px] flex-center absolute top-[-88px] left-0 right-0 bg-white-color z-[100]">
+            <div className="p-12 flex-1 rounded-[8px] relative bg-bg">
               <div className="flex items-center">
                 {messageFormData?.reply_to?.attachment?.id ? (
                   <div className="mr-12 w-[36px] relative overflow-hidden h-[36px] rounded-[2px]">
@@ -200,7 +208,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
         ) : null}
 
         {showEmoji ? (
-          <div ref={emojiRef} className="absolute top-[-390px] z-[100] left-0 w-[300px]">
+          <div ref={emojiRef} className="absolute top-[-390px] z-[100] left-24 w-[300px]">
             <Picker
               categories={[
                 { category: Categories.SUGGESTED, name: "Gợi ý" },
@@ -285,7 +293,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
         <Modal heading="Xác nhận vị trí để gửi" onClose={() => setShowMap(false)} show={true}>
           <Map
             onChooseLocation={(location) => {
-              console.log(location)
+              onSubmit?.({ roomId, location: { lat: location.lat + "", lng: location.lng + "" } })
               setShowMap(false)
             }}
           />

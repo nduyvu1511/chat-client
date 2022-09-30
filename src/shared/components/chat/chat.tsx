@@ -8,7 +8,12 @@ import {
   RoomTypingRes,
   UserData,
 } from "@/models"
-import { setChatProfile, setSocketInstance, setCurrentTyping } from "@/modules"
+import {
+  setChatProfile,
+  setSocketInstance,
+  setCurrentTyping,
+  checkForUserDisconnectWhenTyping,
+} from "@/modules"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch } from "react-redux"
 import io, { Socket } from "socket.io-client"
@@ -51,6 +56,7 @@ export const Chat = () => {
       })
       socket.on("logout", (user: UserData) => {
         console.log("user logout")
+        dispatch(checkForUserDisconnectWhenTyping(user.user_id))
         roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
         roomRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
       })

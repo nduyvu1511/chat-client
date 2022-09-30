@@ -6,13 +6,19 @@ interface MessageReactionCountProps {
   onClick: Function
   reactions: MessageReactionType[]
   count: number
+  className?: string
 }
 
-export const MessageReactionCount = ({ reactions, onClick, count }: MessageReactionCountProps) => {
+export const MessageReactionCount = ({
+  reactions,
+  onClick,
+  count,
+  className = "",
+}: MessageReactionCountProps) => {
   return (
     <div
       onClick={() => onClick()}
-      className="px-12 py-6 bg-white-color rounded-[25px] flex items-center w-fit mt-10 cursor-pointer"
+      className={`px-12 py-6 bg-white-color rounded-[25px] flex items-center w-fit cursor-pointer ${className}`}
     >
       <span className="text-xs font-semibold mr-6">{count}</span>
       {_.uniq(reactions)

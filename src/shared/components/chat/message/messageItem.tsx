@@ -1,7 +1,8 @@
 import { Map } from "@/components"
 import { getMessageDescription } from "@/helper"
 import { LikeMessage, Lnglat, MessageReactionType, MessageRes, UnlikeMessage } from "@/models"
-import { setCurrentMessageEmotionModalId, setMessageReply } from "@/modules"
+import { setCurrentMessageEmotionId, setcurrentDetailMessageId, setMessageReply } from "@/modules"
+import Image from "next/image"
 import { useDispatch } from "react-redux"
 import { MessageItemImage } from "./messageItemImage"
 import { MessageItemOption } from "./messageItemOption"
@@ -11,11 +12,11 @@ import { MessageReactionCount } from "./messageReactionCount"
 interface MessageItemProps {
   className?: string
   data: MessageRes
-  lastMessage: MessageRes
+  lastMessage?: MessageRes
   onLikeMessage?: (_: LikeMessage) => void
   onUnlikeMessage?: (_: UnlikeMessage) => void
-  isLast: boolean
-  shouldBreak: boolean
+  isLast?: boolean
+  shouldBreak?: boolean
   onClickReplyMsg?: (id: string) => void
 }
 
@@ -57,34 +58,32 @@ export const MessageItem = ({
     )
   }
 
+  const handleResendMessage = () => {}
+
   const handleReactionMessage = (emotion: MessageReactionType) => {
     onLikeMessage?.({ emotion, message_id: data.message_id })
   }
 
   const handleUndoMesasgeReaction = (reaction: MessageReactionType) => {
-    console.log({ reactionFromMessageItem: reaction })
     onUnlikeMessage?.({ message_id: data.message_id, reaction })
   }
 
   const handleClickReactedMessage = () => {
-    dispatch(setCurrentMessageEmotionModalId(data.message_id))
+    dispatch(setCurrentMessageEmotionId(data.message_id))
   }
 
   return (
     <div className={`w-full ${className || ""}`}>
       {!data.attachments?.length || data.attachments?.length === 1 ? (
-        <div
-          className={`rounded-[8px] relative ${data?.attachments?.length ? "" : "w-fit p-16"} ${
-            data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"
-          }`}
-        >
+        <div className="relative">
           {!data?.status || data.status === "fulfilled" ? (
             <MessageItemOption
+              onViewDetail={() => dispatch(setcurrentDetailMessageId(data.message_id))}
               value={data?.your_reaction}
               optionTop={0}
               onReaction={handleReactionMessage}
               onUndoReaction={handleUndoMesasgeReaction}
-              className={` group-hover:block w-fit ${
+              className={`group-hover:block w-fit ${
                 !data?.is_author ? "right-[calc(0%-120px)]" : "left-[calc(0%-120px)]"
               }`}
               onReply={handleSetMessageReply}
@@ -92,88 +91,109 @@ export const MessageItem = ({
           ) : null}
 
           {data?.attachments?.length ? (
-            <MessageItemImage data={data.attachments} onClick={(url) => console.log(url)} />
-          ) : null}
-
-          {/* Reply message */}
-          {data?.reply_to?.message_id ? (
             <div
-              onClick={() =>
-                data.reply_to?.message_id && onClickReplyMsg?.(data.reply_to?.message_id)
-              }
-              className={`p-12 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
-                data.is_author ? "bg-[#cddef8]" : "bg-gray-05"
+              className={`relative aspect-[4/3] overflow-hidden ${
+                !data?.message_text && !isLast && !data.reaction_count
+                  ? "rounded-[5px]"
+                  : "rounded-tl-[5px] rounded-tr-[5px]"
               }`}
+              key={data.message_id}
             >
-              <div className="">
-                <p className="text-sm mb-4 line-clamp-1 word-break text-primary font-semibold">
-                  @{data.reply_to.author.author_name}
-                </p>
-                <p className="text-xs line-clamp-1 word-break">{data.reply_to.message_text}</p>
+              <Image layout="fill" alt="" objectFit="cover" src={data.attachments[0].url} />
+            </div>
+          ) : null}
+
+          <div
+            className={`min-w-[56px] ${
+              data?.attachments?.length === 1
+                ? "rounded-br-[8px] rounded-bl-[8px]"
+                : "rounded-[8px]"
+            } ${isLast || data?.message_text || data?.reaction_count ? "p-12" : ""} ${
+              data?.attachments?.length ? "" : "w-fit"
+            } ${data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"}`}
+          >
+            {/* Reply message */}
+            {data?.reply_to?.message_id ? (
+              <div
+                onClick={() =>
+                  data.reply_to?.message_id && onClickReplyMsg?.(data.reply_to?.message_id)
+                }
+                className={`p-12 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
+                  data.is_author ? "bg-[#cddef8]" : "bg-gray-05"
+                }`}
+              >
+                <div className="">
+                  <p className="text-sm mb-4 line-clamp-1 word-break text-primary font-semibold">
+                    @{data.reply_to.author.author_name}
+                  </p>
+                  <p className="text-xs line-clamp-1 word-break">{data.reply_to.message_text}</p>
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {/* Message text */}
-          {data?.message_text ? (
-            <p
-              className={`text-14 leading-20 font-medium ${
-                data.is_author ? "text-primary" : "text-blue-8"
-              } ${data?.attachments?.length ? "p-16" : ""}`}
-            >
-              {data.message_text}
-            </p>
-          ) : null}
+            {/* Message text */}
+            {data?.message_text ? (
+              <p
+                className={`text-14 leading-20 font-medium ${
+                  data.is_author ? "text-primary" : "text-blue-8"
+                }`}
+              >
+                {data.message_text}
+              </p>
+            ) : null}
 
-          {/* Location */}
-          {data?.location ? (
-            <div
-              onClick={() => data.location && generateGoogleMapUrl(data.location)}
-              className="w-[300px] h-[150px] rounded-[8px] overflow-hidden cursor-pointer"
-            >
-              <Map
-                // markerIcon={data.author?.author_avatar?.thumbnail_url || blankAvatar}
-                viewOnly
-                markerLocation={{ lat: +data.location.lat, lng: +data.location.lng }}
+            {/* Location */}
+            {data?.location ? (
+              <div
+                onClick={() => data.location && generateGoogleMapUrl(data.location)}
+                className="w-[300px] h-[150px] rounded-[8px] overflow-hidden cursor-pointer"
+              >
+                <Map
+                  // markerIcon={data.author?.author_avatar?.thumbnail_url || blankAvatar}
+                  viewOnly
+                  markerLocation={{ lat: +data.location.lat, lng: +data.location.lng }}
+                />
+              </div>
+            ) : null}
+
+            {isLast || data.status === "rejected" ? (
+              <MessageItemStatus
+                onResendMessage={handleResendMessage}
+                className={`${data?.message_text ? "mt-12" : ""}`}
+                createdAt={data.created_at}
+                isRead={data.is_read}
+                showStatus={lastMessage?.message_id === data.message_id && lastMessage?.is_author}
+                status={data?.status}
               />
-            </div>
-          ) : null}
+            ) : null}
 
-          {isLast ? (
-            <MessageItemStatus
-              className={`mt-8 ${data?.attachments?.length ? "px-16 pb-16 mt-[-4px]" : ""}`}
-              createdAt={data.created_at}
-              isRead={data.is_read}
-              showStatus={lastMessage.message_id === data.message_id && lastMessage.is_author}
-              status={data?.status}
-            />
-          ) : null}
-
-          {data.reaction_count ? (
-            <MessageReactionCount
-              onClick={handleClickReactedMessage}
-              count={data.reaction_count}
-              reactions={data.reactions}
-            />
-          ) : null}
+            {data.reaction_count ? (
+              <MessageReactionCount
+                className={`${data?.message_text || isLast || data.location ? "mt-12" : ""}`}
+                onClick={handleClickReactedMessage}
+                count={data.reaction_count}
+                reactions={data.reactions}
+              />
+            ) : null}
+          </div>
         </div>
       ) : data?.attachments?.length ? (
         <div className="relative flex-1 w-full">
           {data?.message_text ? (
             <div
-              className={`rounded-[8px] p-16 w-fit ${
+              className={`rounded-[8px] p-12 w-fit min-w-[56px] ${
                 data.is_author ? "text-primary bg-bg-blue ml-auto" : "text-blue-8 bg-bg"
               }`}
             >
               <p className="text-14 leading-20 font-medium">{data.message_text}</p>
 
-              {data.reaction_count ? (
+              {/* {data.reaction_count ? (
                 <MessageReactionCount
                   onClick={handleClickReactedMessage}
                   count={data.reaction_count}
                   reactions={data.reactions}
                 />
-              ) : null}
+              ) : null} */}
             </div>
           ) : null}
 
@@ -183,18 +203,20 @@ export const MessageItem = ({
             onClick={(url) => console.log(url)}
           />
 
-          {isLast ? (
+          {isLast || data.status === "rejected" ? (
             <MessageItemStatus
-              className={`mt-8 ${data?.attachments?.length ? "pb-16 mt-16" : ""}`}
+              onResendMessage={handleResendMessage}
+              className={`mt-12 ${data?.attachments?.length ? "pb-16 mt-16" : ""}`}
               createdAt={data.created_at}
               isRead={data.is_read}
-              showStatus={lastMessage.message_id === data.message_id && lastMessage.is_author}
+              showStatus={lastMessage?.message_id === data.message_id && lastMessage?.is_author}
               status={data?.status}
             />
           ) : null}
 
           {!data?.status || data.status === "fulfilled" ? (
             <MessageItemOption
+              onViewDetail={() => dispatch(setcurrentDetailMessageId(data.message_id))}
               value={data?.your_reaction}
               onReaction={handleReactionMessage}
               onUndoReaction={handleUndoMesasgeReaction}

@@ -177,6 +177,10 @@ const chatApi = {
     return axiosClient.get(`/message/users/like/${messageId}`)
   },
 
+  getUsersReadMessage: (messageId: string) => {
+    return axiosClient.get(`/message/users/read/${messageId}`)
+  },
+
   uploadSingleImage: (formData: FormData) => {
     return axiosClient.post(`/attachment/image/single`, formData)
   },

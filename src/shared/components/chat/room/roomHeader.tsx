@@ -1,6 +1,7 @@
 import { blankAvatar, ThreeDotsIcon } from "@/assets"
 import { RoomDetailRes } from "@/models"
 import moment from "moment"
+import { HiOutlineUser } from "react-icons/hi"
 import { Avatar } from "../avatar"
 
 interface RoomHeaderProps {
@@ -9,7 +10,7 @@ interface RoomHeaderProps {
 
 export const RoomHeader = ({ data }: RoomHeaderProps) => {
   return (
-    <div className="flex">
+    <div className="h-full px-16 flex-center">
       <div className="flex items-center flex-1 mr-16">
         <div className="mr-12">
           <Avatar
@@ -25,9 +26,17 @@ export const RoomHeader = ({ data }: RoomHeaderProps) => {
           <p className="text-sm font-semibold md:text-semibold text-primary line-clamp-1">
             {data.room_name}
           </p>
-          {!data.is_online && data?.offline_at ? (
-            <p className="text-xs text-gray-color-5">{moment(data?.offline_at).fromNow()}</p>
-          ) : null}
+          <div className="flex items-center">
+            {data.room_type === "group" ? (
+              <p className="text-xs mr-12 text-gray-color-4 flex items-center">
+                <HiOutlineUser className="mr-4" />
+                {data.member_count} Thành viên
+              </p>
+            ) : null}
+            {!data.is_online && data?.offline_at ? (
+              <p className="text-xs text-gray-color-5">{moment(data?.offline_at).fromNow()}</p>
+            ) : null}
+          </div>
         </div>
       </div>
 

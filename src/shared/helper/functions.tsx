@@ -365,7 +365,7 @@ export const getMessageDescription = (params: MessageRes): string => {
   } else if (params?.tags?.length) {
     message_text = "Tin nhắn nhanh"
   } else if (params?.location) {
-    message_text = "Tọa độ"
+    message_text = "Vị trí"
   }
 
   return message_text

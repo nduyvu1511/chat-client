@@ -15,7 +15,8 @@ interface ChatSlice {
   socket: Socket<any> | undefined
   messageFormData: MessageFormData[]
   profile: UserRes | undefined
-  currentMessageEmotionModalId: string | undefined
+  currentMessageEmotionId: string | undefined
+  currentDetailMessageId: string | undefined
 }
 
 const initialState: ChatSlice = {
@@ -23,7 +24,8 @@ const initialState: ChatSlice = {
   socket: undefined,
   messageFormData: [],
   profile: undefined,
-  currentMessageEmotionModalId: undefined,
+  currentMessageEmotionId: undefined,
+  currentDetailMessageId: undefined,
 }
 
 const chatSlice = createSlice({
@@ -34,8 +36,18 @@ const chatSlice = createSlice({
       state.currentTyping = payload
     },
 
-    setCurrentMessageEmotionModalId: (state, { payload }: PayloadType<string | undefined>) => {
-      state.currentMessageEmotionModalId = payload
+    checkForUserDisconnectWhenTyping: (state, { payload }: PayloadType<string>) => {
+      if (state.currentTyping?.user_id === payload) {
+        state.currentTyping = undefined
+      }
+    },
+
+    setCurrentMessageEmotionId: (state, { payload }: PayloadType<string | undefined>) => {
+      state.currentMessageEmotionId = payload
+    },
+
+    setcurrentDetailMessageId: (state, { payload }: PayloadType<string | undefined>) => {
+      state.currentDetailMessageId = payload
     },
 
     setSocketInstance: (state, { payload }: PayloadType<Socket<any> | undefined>) => {
@@ -132,5 +144,7 @@ export const {
   setMessageText,
   setChatProfile,
   setMessageReply,
-  setCurrentMessageEmotionModalId,
+  setCurrentMessageEmotionId,
+  checkForUserDisconnectWhenTyping,
+  setcurrentDetailMessageId,
 } = chatSlice.actions
