@@ -24,15 +24,16 @@ import { RoomHeader } from "./roomHeader"
 type OnForwaredRoomDetail = ForwardedRef<RoomDetailFunctionHandler>
 
 interface RoomDetailProps {
-  roomId: string
   onSendMessage?: (_: MessageRes) => void
 }
 
 export const RoomDetail = forwardRef(function RoomChild(
-  { roomId, onSendMessage }: RoomDetailProps,
+  { onSendMessage }: RoomDetailProps,
   ref: OnForwaredRoomDetail
 ) {
   const socket = useSelector((state: RootState) => state.chat.socket)
+  const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
+
   const messageFormRef = useRef<OnResetParams>(null)
   const {
     data,
@@ -61,6 +62,7 @@ export const RoomDetail = forwardRef(function RoomChild(
     getMoreMessages,
     isFetchingMore,
     mutatePartnerReactionMessage,
+    resendMessage,
   } = useMessage({ roomId, initialData: data?.messages })
 
   useImperativeHandle(ref, () => ({
@@ -121,7 +123,7 @@ export const RoomDetail = forwardRef(function RoomChild(
     messageFormRef?.current?.onReset()
 
     sendMessage({
-      params: { ...val, roomId: roomId },
+      params: { ...val, room_id: roomId },
       onSuccess: (data) => {
         onSendMessage?.(data)
         if (socket) {
@@ -143,13 +145,20 @@ export const RoomDetail = forwardRef(function RoomChild(
     })
   }
 
+  if (!roomId)
+    return (
+      <div className="flex-1 flex-center text-sm text-gray-color-4">
+        Chọn cuộc hội thoại để bắt đầu trò chuyện
+      </div>
+    )
+
   return (
     <div className="flex flex-col flex-1 chat-message bg-white-color">
       {data === undefined && error === undefined ? (
         <Spinner />
       ) : (
         <>
-          <div className="h-[60px] border-b border-border-color border-solid">
+          <div className="h-[70px] border-b border-border-color border-solid">
             <RoomHeader data={data as any} />
           </div>
 
@@ -161,6 +170,7 @@ export const RoomDetail = forwardRef(function RoomChild(
               onUnlikeMessage={handleUndoMesasgeReaction}
               data={messages}
               onGetMoreMessage={() => getMoreMessages()}
+              onResendMessage={resendMessage}
             />
           ) : (
             <div className="text-sm text-gray-color-3 flex-center py-24 min-h-[300px] flex-1">
@@ -170,7 +180,6 @@ export const RoomDetail = forwardRef(function RoomChild(
 
           <MessageForm
             className="px-24 border-t border-solid border-border-color"
-            roomId={roomId}
             ref={messageFormRef}
             onSubmit={handleSendMessage}
           />

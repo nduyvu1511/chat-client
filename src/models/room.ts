@@ -73,7 +73,7 @@ export type LastMessage = Pick<
 }
 
 export interface CreateSingleChat {
-  partner_id: number
+  partner_id: number | string
 }
 
 export interface CreateGroupChat {

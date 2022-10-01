@@ -1,18 +1,56 @@
 import { blankAvatar } from "@/assets"
-import { UserRes } from "@/models"
+import { useAsync } from "@/hooks"
+import { RoomRes, UserRes } from "@/models"
+import {
+  setcurrentDetailMessageId,
+  setCurrentMessageEmotionId,
+  setCurrentProfileId,
+  setCurrentRoomId,
+} from "@/modules"
+import { chatApi } from "@/services"
 import moment from "moment"
 import Image from "next/image"
-import React from "react"
+import { useDispatch } from "react-redux"
+import { mutate } from "swr"
 
 interface UserProfileProps {
   data: UserRes
 }
 
 export const UserProfile = ({ data }: UserProfileProps) => {
+  const dispatch = useDispatch()
+  const { asyncHandler } = useAsync()
+
+  const joinRoomHandler = (roomId: string) => {
+    dispatch(setCurrentRoomId(roomId))
+    dispatch(setCurrentProfileId(undefined))
+    dispatch(setcurrentDetailMessageId(undefined))
+    dispatch(setCurrentMessageEmotionId(undefined))
+    document.querySelector(`.room-item-${roomId}`)?.scrollIntoView()
+  }
+
+  const handleJoinRoom = async () => {
+    if (data.is_yourself) return
+
+    if (data?.room_id) {
+      joinRoomHandler(data.room_id)
+    } else {
+      asyncHandler<RoomRes>({
+        fetcher: chatApi.createSingleChat({ partner_id: data.user_id }),
+        onSuccess: (res) => {
+          mutate("get_room_list")
+          setTimeout(() => {
+            joinRoomHandler(res.room_id)
+          }, 100)
+        },
+      })
+    }
+  }
+
   return (
     <div>
-      <div className="flex-center mb-24">
-        <div className="mb-12 w-[80px] h-[80px] rounded-[50%] overflow-hidden">
+      <div className="flex-center flex-col p-16 border-b border-border-color border-solid">
+        <div className="relative mb-12 w-[80px] h-[80px] rounded-[50%] overflow-hidden">
           <Image
             src={data.avatar?.thumbnail_url || blankAvatar}
             layout="fill"
@@ -20,32 +58,41 @@ export const UserProfile = ({ data }: UserProfileProps) => {
             objectFit="cover"
           />
         </div>
-        <p className="text-lg font-semibold mb-16">{data.user_name}</p>
-        <button className="bg-bg h-[32px] rounded-[5px] text-sm font-semibold">Nhắn tin</button>
+        <p className="text-base font-semibold line-clamp-1 word-break">{data.user_name}</p>
+        {!data?.is_yourself ? (
+          <button
+            onClick={handleJoinRoom}
+            className="bg-bg h-[32px] px-32 py-4 rounded-[5px] text-sm font-semibold mt-16"
+          >
+            Nhắn tin
+          </button>
+        ) : null}
       </div>
 
       <div className="p-16">
-        <p className="text-base font-semibold">Thông tin cá nhân</p>
+        <p className="text-sm font-semibold mb-12">Thông tin cá nhân</p>
 
         <ul>
           <li className="flex items-start mb-12">
-            <p className="text-xs w-[100px]">Bio</p>
+            <p className="text-xs leading-[24px] w-[100px]">Bio</p>
             <p className="text-sm">{data?.bio || "Chưa có thông tin"}</p>
           </li>
           <li className="flex items-start mb-12">
-            <p className="text-xs w-[100px]">Điện thoại</p>
+            <p className="text-xs leading-[24px] w-[100px]">Điện thoại</p>
             <p className="text-sm">{data?.phone || ""}</p>
           </li>
-          <li className="flex items-start">
-            <p className="text-xs w-[100px]">Giới tính</p>
+          <li className="flex items-start mb-12">
+            <p className="text-xs leading-[24px] w-[100px]">Giới tính</p>
             <p className="text-sm">
               {data?.gender === "female" ? "Nữ" : data.gender === "male" ? "Nam" : "Khác"}
             </p>
           </li>
           <li className="flex items-start">
-            <p className="text-xs w-[100px]">Ngày sinh</p>
+            <p className="text-xs leading-[24px] w-[100px]">Ngày sinh</p>
             <p className="text-sm">
-              {data?.date_of_birth ? moment(data.date_of_birth) : "Chưa có thông tin"}
+              {data?.date_of_birth
+                ? moment(data.date_of_birth).format("DD/MM/YYYY")
+                : "Chưa có thông tin"}
             </p>
           </li>
         </ul>

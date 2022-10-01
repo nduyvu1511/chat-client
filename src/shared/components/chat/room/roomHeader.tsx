@@ -23,7 +23,7 @@ export const RoomHeader = ({ data }: RoomHeaderProps) => {
         </div>
 
         <div className="flex-1">
-          <p className="text-sm font-semibold md:text-semibold text-primary line-clamp-1">
+          <p className="text-sm font-semibold md:text-semibold text-primary line-clamp-1 word-break">
             {data.room_name}
           </p>
           <div className="flex items-center">

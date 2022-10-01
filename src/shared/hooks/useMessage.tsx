@@ -5,6 +5,7 @@ import {
   LikeMessage,
   LikeMessageRes,
   ListRes,
+  MessageAttachment,
   MessageRes,
   mutateMessageReaction,
   SendMessage,
@@ -36,6 +37,7 @@ interface UseMessageRes {
   mutateMessageReaction: (_: mutateMessageReaction) => void
   mutateByMessageRes: (message: MessageRes) => void
   mutatePartnerReactionMessage: (message: MessageRes) => void
+  resendMessage: (message: MessageRes) => void
 }
 
 interface UseMessageProps {
@@ -107,6 +109,39 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     )
   }
 
+  const deleteMessageFromList = (id: string) => {
+    if (!data?.data?.length) return
+    mutate(
+      produce(data, (draft) => {
+        draft.data = draft.data.filter((item) => item.message_id !== id)
+      }),
+      false
+    )
+  }
+
+  const resendMessage = (params: MessageRes) => {
+    const args: SendMessageData = {
+      attachments: params?.attachments || [],
+      location: params?.location || undefined,
+      reply_to: params?.reply_to?.message_id
+        ? {
+            author: params?.reply_to.author,
+            message_id: params?.reply_to?.message_id,
+            created_at: params.reply_to.created_at,
+            message_text: params.reply_to.message_text,
+            attachment: params.reply_to?.attachment,
+          }
+        : undefined,
+      tags: params?.tags || [],
+      text: params?.message_text || undefined,
+      room_id: params.room_id,
+    }
+
+    deleteMessageFromList(params.message_id)
+
+    sendMessage({ params: args })
+  }
+
   const findMessageIndex = (message_id: string): number => {
     const index =
       data && data?.data?.length > 0
@@ -119,14 +154,20 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
   }
 
   const createMessageRes = (data: SendMessageData): MessageRes => {
-    const attachments: AttachmentRes[] = data?.attachments
-      ? data?.attachments.map((item) => ({
+    let attachments: AttachmentRes[] = []
+    if (data?.attachments?.length) {
+      const { attachments: attachmentData } = data
+      if ((attachmentData as AttachmentRes[])?.[0]?.attachment_id) {
+        attachments = attachmentData as AttachmentRes[]
+      } else if ((attachmentData as MessageAttachment[])?.[0]?.file) {
+        attachments = (attachmentData as MessageAttachment[]).map((item) => ({
           url: item.previewImage,
           thumbnail_url: item.previewImage,
           attachment_id: uuidv4(),
           attachment_type: "image",
         }))
-      : []
+      }
+    }
 
     return {
       author: {
@@ -146,7 +187,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       reaction_count: 0,
       message_id: uuidv4(),
       message_text: data?.text || null,
-      room_id: data.roomId,
+      room_id: data.room_id,
       location: null,
       reply_to: data?.reply_to || null,
       tags: data?.tags || [],
@@ -159,30 +200,36 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
   const getMessage = async (data: SendMessageData): Promise<SendMessage> => {
     let attachment_ids: string[] = []
     if (data.attachments?.length) {
-      const formData = new FormData()
-      data.attachments.forEach((item) => {
-        ;(formData as FormData).append("images", item.file)
-      })
+      const { attachments } = data
+      if ((attachments as MessageAttachment[])?.[0]?.file) {
+        const formData = new FormData()
 
-      // Take attachments from server
-      try {
-        const res: AxiosResponse<AttachmentRes[]> = await chatApi.uploadMultipleImage(formData)
-        if (res?.success) {
-          attachment_ids = res?.data?.map((item) => item.attachment_id) || []
+        ;(attachments as MessageAttachment[]).forEach((item) => {
+          ;(formData as FormData).append("images", item.file)
+        })
+
+        // get attachments from API response
+        try {
+          const res: AxiosResponse<AttachmentRes[]> = await chatApi.uploadMultipleImage(formData)
+          if (res?.success) {
+            attachment_ids = res?.data?.map((item) => item.attachment_id) || []
+          }
+        } catch (error) {
+          console.log(error)
         }
-      } catch (error) {
-        console.log(error)
+      } else if ((attachments as AttachmentRes[])?.[0]?.attachment_id) {
+        attachment_ids = (attachments as AttachmentRes[]).map((item) => item.attachment_id)
       }
     }
 
     return {
-      room_id: data.roomId,
+      room_id: data.room_id,
       attachment_ids,
       location: data?.location,
       reply_to: data?.reply_to
         ? { message_id: data.reply_to.message_id, attachment_id: data.reply_to?.attachment?.id }
         : undefined,
-      tag_ids: data?.tags?.map((item) => item.tag_id) || undefined,
+      tag_ids: data?.tags?.length ? data.tags.map((item) => item.tag_id) : null,
       text: data?.text,
     }
   }
@@ -236,7 +283,8 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       mutate(
         produce(data, (draft) => {
           draft.data[draft.data.length - 1].is_read = true
-        })
+        }),
+        false
       )
     }
   }
@@ -288,10 +336,8 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
           if (!message.your_reaction) {
             messageDraft.reaction_count += 1
             messageDraft.reactions.push(reaction)
-          }
-
-          if (message.your_reaction !== reaction) {
-            console.log("your reaction diff")
+            messageDraft.your_reaction = reaction
+          } else if (message.your_reaction && message.your_reaction !== reaction) {
             messageDraft.your_reaction = reaction
 
             const _index = message.reactions?.findIndex((e) => e === message.your_reaction)
@@ -367,5 +413,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     isFirstLoading: error === undefined && data === undefined,
     mutateByMessageRes,
     mutatePartnerReactionMessage,
+    resendMessage,
   }
 }

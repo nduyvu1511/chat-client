@@ -34,9 +34,9 @@ export const RoomItem = ({
   return (
     <div
       onClick={() => onSelectRoom?.(data)}
-      className={`p-16 flex items-center cursor-pointer rounded-[8px] ${
-        isActive ? "bg-blue-10" : "hover:bg-bg"
-      }`}
+      className={`p-16 flex items-center cursor-pointer rounded-[8px] select-none room-item-${
+        data.room_id
+      } ${isActive ? "bg-blue-10" : "hover:bg-bg"}`}
     >
       <div className="mr-12">
         <Avatar
@@ -79,7 +79,7 @@ export const RoomItem = ({
                 {data?.last_message?.is_author ? "Bạn: " : data.last_message?.author_name}
               </p>
               <p
-                className={`text-xs line-clamp-1 ${
+                className={`text-xs line-clamp-1 word-break ${
                   !data?.message_unread_count ? "text-gray-color-7" : "text-blue-50"
                 }`}
               >

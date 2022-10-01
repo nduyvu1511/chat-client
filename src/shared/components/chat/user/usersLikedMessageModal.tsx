@@ -1,7 +1,7 @@
 import { blankAvatar } from "@/assets"
-import { ModalSm, Spinner } from "@/components"
+import { ModalSm } from "@/components"
 import { MessageReactionType, UserReactionRes, UsersLikedMessageRes } from "@/models"
-import { setCurrentMessageEmotionId } from "@/modules"
+import { setCurrentMessageEmotionId, setCurrentProfileId } from "@/modules"
 import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import { useState } from "react"
@@ -16,7 +16,7 @@ interface Props {
 
 export const UsersLikedMessageModal = ({ messageId }: Props) => {
   const dispatch = useDispatch()
-  const { data, error } = useSWR<UsersLikedMessageRes | undefined>(
+  const { data, error, isValidating } = useSWR<UsersLikedMessageRes | undefined>(
     messageId ? `get_users_liked_message_${messageId}` : null,
     () =>
       chatApi.getUsersLikedMessage(messageId).then((res: AxiosResponse<UsersLikedMessageRes>) => {
@@ -42,11 +42,14 @@ export const UsersLikedMessageModal = ({ messageId }: Props) => {
   }
 
   return (
-    <ModalSm className="w-[440px]" onClose={closeModal} title="Chi tiết tin nhắn">
+    <ModalSm
+      showLoading={isValidating}
+      className="w-[440px]"
+      onClose={closeModal}
+      title="Chi tiết tin nhắn"
+    >
       <>
-        {data === undefined && error === undefined ? (
-          <Spinner className="py-40" />
-        ) : data ? (
+        {data ? (
           <div className="flex-1 bg-gray-05 border-b border-solid border-border-color">
             <div className="flex items-center border-b border-solid border-border-color px-16">
               {Object.entries(data).map(([key]) => (
@@ -82,6 +85,7 @@ export const UsersLikedMessageModal = ({ messageId }: Props) => {
               <div className="px-16 py-8 h-[250px] overflow-y-auto">
                 {currentSelect.data.map((item) => (
                   <UserItem
+                    onClick={(id) => dispatch(setCurrentProfileId(id))}
                     className="my-10"
                     key={item.user_id}
                     data={{

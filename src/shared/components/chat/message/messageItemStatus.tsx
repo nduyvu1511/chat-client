@@ -23,8 +23,8 @@ export const MessageItemStatus = ({
   onResendMessage,
 }: MessageItemStatusProps) => {
   return (
-    <div className="">
-      <div className={`flex items-center ${className}`}>
+    <div className={`${className}`}>
+      <div className={`flex items-center`}>
         <p className={`${textStyle} mr-24`}>{moment(createdAt).format("HH:mm")}</p>
 
         {status && status !== "fulfilled" ? (
@@ -36,9 +36,12 @@ export const MessageItemStatus = ({
         ) : null}
       </div>
       {status === "rejected" ? (
-        <button onClick={() => onResendMessage?.()} className="flex items-center mt-8">
+        <button
+          onClick={() => onResendMessage?.()}
+          className="flex items-center mt-8 hover:text-primary"
+        >
           <BsArrowCounterclockwise className="mr-4" />
-          <span className={`${textStyle} ml-auto`}>Gửi lại</span>
+          <span className={`${textStyle} ml-auto hover:text-primary`}>Gửi lại</span>
         </button>
       ) : null}
     </div>

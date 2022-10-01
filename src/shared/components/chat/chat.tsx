@@ -9,10 +9,11 @@ import {
   UserData,
 } from "@/models"
 import {
-  setChatProfile,
-  setSocketInstance,
-  setCurrentTyping,
   checkForUserDisconnectWhenTyping,
+  setChatProfile,
+  setCurrentRoomId,
+  setCurrentTyping,
+  setSocketInstance,
 } from "@/modules"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch } from "react-redux"
@@ -26,7 +27,7 @@ export const Chat = () => {
   const roomDetailRef = useRef<RoomDetailFunctionHandler>(null)
   const roomRef = useRef<RoomFunctionHandler>(null)
 
-  const [roomId, setRoomId] = useState<string | undefined>()
+  // const [roomId, setRoomId] = useState<string | undefined>()
   const [isConnected, setConnected] = useState<boolean>(false)
 
   useEffect(() => {
@@ -113,32 +114,27 @@ export const Chat = () => {
   }
 
   const handleSelectRoom = (room: RoomRes) => {
-    if (roomId === room.room_id) return
+    dispatch(setCurrentRoomId(room.room_id))
+    // if (roomId === room.room_id) return
 
-    setRoomId(room.room_id)
+    // setRoomId(room.room_id)
 
-    if (!socketIo.current?.id) return
-    const socket = socketIo.current
-    if (roomId) {
-      socket.emit("leave_room", roomId)
-    }
-    socket.emit("join_room", room.room_id)
+    // if (!socketIo.current?.id) return
+    // const socket = socketIo.current
+    // if (roomId) {
+    //   socket.emit("leave_room", roomId)
+    // }
+    // socket.emit("join_room", room.room_id)
   }
 
   if (!isConnected) return <Spinner size={36} />
   return (
     <section className="grid grid-cols-chat-lg gap-24 overflow-hidden flex-1">
       <aside className="block-element p-24 pr-12 flex flex-col">
-        <Room ref={roomRef} roomId={roomId} onSelectRoom={handleSelectRoom} />
+        <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
       </aside>
       <div className="block-element flex flex-col">
-        {roomId ? (
-          <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} roomId={roomId} />
-        ) : (
-          <div className="flex-1 flex-center text-sm text-gray-color-4">
-            Chọn cuộc hội thoại để bắt đầu trò chuyện
-          </div>
-        )}
+        <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
       </div>
     </section>
   )

@@ -24,7 +24,6 @@ import { ImagePickupPreview } from "./messageImagePicker"
 
 interface MessageFormProps {
   onSubmit?: (val: SendMessageData) => void
-  roomId: string
   className?: string
 }
 
@@ -36,21 +35,24 @@ const Picker = dynamic(
 )
 
 export const MessageForm = forwardRef(function MessageFormChild(
-  { onSubmit, roomId, className }: MessageFormProps,
+  { onSubmit, className }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
-  const timeout = useRef<any>()
-  const [isTyping, setTyping] = useState<boolean>(false)
-  const emojiRef = useRef<HTMLDivElement>(null)
-  const [showEmoji, setShowEmoji] = useState<boolean>(false)
-  const [showMap, setShowMap] = useState<boolean>(false)
   const dispatch = useDispatch()
+  const timeout = useRef<any>()
+  const emojiRef = useRef<HTMLDivElement>(null)
+
   const socket = useSelector((state: RootState) => state.chat.socket)
-  const messageFormData = useSelector((state: RootState) =>
-    state.chat.messageFormData?.find((item) => item.roomId === roomId)
-  )
   const user = useSelector((state: RootState) => state.chat.profile)
   const currentTyping = useSelector((state: RootState) => state.chat.currentTyping)
+  const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
+  const messageFormData = useSelector((state: RootState) =>
+    state.chat.messageFormData?.find((item) => item.room_id === roomId)
+  )
+
+  const [isTyping, setTyping] = useState<boolean>(false)
+  const [showEmoji, setShowEmoji] = useState<boolean>(false)
+  const [showMap, setShowMap] = useState<boolean>(false)
 
   useClickOutside([emojiRef], () => {
     setShowEmoji(false)
@@ -58,7 +60,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   useImperativeHandle(ref, () => ({
     onReset() {
-      dispatch(resetMessageDataInRoom(roomId))
+      dispatch(resetMessageDataInRoom())
     },
   }))
 
@@ -106,7 +108,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     onKeyDownNotEnter()
-    dispatch(setMessageText({ text: e.target.value, roomId }))
+    dispatch(setMessageText(e.target.value))
   }
 
   const handleAddFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +116,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
     if (!attachments) return
     if (!checkLimitFile(attachments.length)) return
 
-    dispatch(addMessageAttachment({ data: attachments, roomId }))
+    dispatch(addMessageAttachment(attachments))
   }
 
   const checkLimitFile = (length: number): boolean => {
@@ -140,7 +142,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
     const attachments = toAttachments(e)
     if (!attachments || !checkLimitFile(attachments.length)) return
 
-    dispatch(setMessageDataInRoom({ data: { ...messageFormData, attachments }, roomId }))
+    dispatch(setMessageDataInRoom({ ...messageFormData, attachments }))
   }
 
   return (
@@ -153,7 +155,9 @@ export const MessageForm = forwardRef(function MessageFormChild(
         {/* Typing */}
         {currentTyping ? (
           <div className="absolute left-0 top-[-24px] flex-center px-24 py-4 z-[100] bg-white-color">
-            <p className="text-xs line-clamp-1">{currentTyping?.user_name} đang soạn tin nhắn...</p>
+            <p className="text-xs line-clamp-1 word-break">
+              {currentTyping?.user_name} đang soạn tin nhắn...
+            </p>
           </div>
         ) : null}
 
@@ -161,13 +165,11 @@ export const MessageForm = forwardRef(function MessageFormChild(
           <div className="h-[160px] absolute top-[-160px] z-[100] left-0 right-0 bg-white-color px-24">
             <ImagePickupPreview
               onClose={() =>
-                dispatch(
-                  setMessageDataInRoom({ data: { ...messageFormData, attachments: [] }, roomId })
-                )
+                dispatch(setMessageDataInRoom({ ...messageFormData, attachments: [] }))
               }
               onAdd={handleAddFile}
-              onDelete={(imageId) => dispatch(deleteMessageAttachment({ roomId, imageId }))}
-              data={messageFormData?.attachments || []}
+              onDelete={(imageId) => dispatch(deleteMessageAttachment({ imageId }))}
+              data={(messageFormData?.attachments as any[]) || []}
             />
           </div>
         ) : null}
@@ -193,12 +195,14 @@ export const MessageForm = forwardRef(function MessageFormChild(
                       {messageFormData.reply_to.author.author_name}
                     </span>
                   </p>
-                  <p className="text-xs line-clamp-1">{messageFormData.reply_to.message_text}</p>
+                  <p className="text-xs line-clamp-1 word-break">
+                    {messageFormData.reply_to.message_text}
+                  </p>
                 </div>
               </div>
 
               <button
-                onClick={() => dispatch(setMessageReply({ data: undefined, roomId }))}
+                onClick={() => dispatch(setMessageReply(undefined))}
                 className="w-[16px] h-[16px] rounded-[50%] bg-gray-color-2 transition-colors duration-100 hover:bg-primary flex-center absolute right-12 top-12"
               >
                 <CloseThickIcon className="w-8 h-8 text-white-color" />
@@ -220,7 +224,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
               ]}
               onEmojiClick={({ emoji }) => {
                 const text = `${messageFormData?.text || ""} ${emoji} `
-                dispatch(setMessageText({ text, roomId }))
+                dispatch(setMessageText(text))
               }}
               height={400}
               width={340}
@@ -238,6 +242,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
             </button>
 
             <input
+              id="message-form-input"
               onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
               onChange={handleChange}
               value={messageFormData?.text || ""}
@@ -293,7 +298,10 @@ export const MessageForm = forwardRef(function MessageFormChild(
         <Modal heading="Xác nhận vị trí để gửi" onClose={() => setShowMap(false)} show={true}>
           <Map
             onChooseLocation={(location) => {
-              onSubmit?.({ roomId, location: { lat: location.lat + "", lng: location.lng + "" } })
+              onSubmit?.({
+                room_id: roomId,
+                location: { lat: location.lat + "", lng: location.lng + "" },
+              })
               setShowMap(false)
             }}
           />

@@ -16,17 +16,21 @@ interface UserItemProps {
 
 export const UserItem = ({ data, onClick, className = "" }: UserItemProps) => {
   return (
-    <div
-      onClick={() => onClick?.(data.user_id)}
-      className={`flex items-center cursor-default select-none ${className}`}
-    >
-      <div className="flex items-center flex-1 mr-12">
+    <div className={`flex items-center cursor-default select-none ${className}`}>
+      <div
+        onClick={() => onClick?.(data.user_id)}
+        className="flex items-center flex-1 cursor-pointer"
+      >
         <span className="w-[40px] h-[40px] rounded-[50%] overflow-hidden mr-12 relative">
           <Image src={data.avatar} alt="" layout="fill" objectFit="cover" />
         </span>
-        <span className="text-sm flex-1 line-clamp-1">{data.user_name}</span>
+        <span className="text-[13px] font-medium text-blue-8 flex-1 line-clamp-1 word-break">
+          {data.user_name}
+        </span>
       </div>
-      {data?.reaction ? <MessageReactionIcon emotion_type={data.reaction} size={24} /> : null}
+      {data?.reaction ? (
+        <MessageReactionIcon className="ml-12" emotion_type={data.reaction} size={24} />
+      ) : null}
     </div>
   )
 }

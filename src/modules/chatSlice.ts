@@ -17,6 +17,8 @@ interface ChatSlice {
   profile: UserRes | undefined
   currentMessageEmotionId: string | undefined
   currentDetailMessageId: string | undefined
+  currentProfileId: string | undefined
+  currentRoomId: string | undefined
 }
 
 const initialState: ChatSlice = {
@@ -26,6 +28,8 @@ const initialState: ChatSlice = {
   profile: undefined,
   currentMessageEmotionId: undefined,
   currentDetailMessageId: undefined,
+  currentProfileId: undefined,
+  currentRoomId: undefined,
 }
 
 const chatSlice = createSlice({
@@ -46,6 +50,21 @@ const chatSlice = createSlice({
       state.currentMessageEmotionId = payload
     },
 
+    setCurrentRoomId: (state, { payload }: PayloadType<string | undefined>) => {
+      if (payload === state.currentRoomId) return
+
+      if (state.currentRoomId) {
+        state.socket?.emit("leave_room", state.currentRoomId)
+      }
+      state.socket?.emit("join_room", payload)
+
+      state.currentRoomId = payload
+    },
+
+    setCurrentProfileId: (state, { payload }: PayloadType<string | undefined>) => {
+      state.currentProfileId = payload
+    },
+
     setcurrentDetailMessageId: (state, { payload }: PayloadType<string | undefined>) => {
       state.currentDetailMessageId = payload
     },
@@ -54,64 +73,59 @@ const chatSlice = createSlice({
       state.socket = payload as any
     },
 
-    setMessageDataInRoom: (
-      state,
-      { payload }: PayloadType<{ data: MessageForm; roomId: string }>
-    ) => {
-      const index = state.messageFormData.findIndex((item) => {
-        return item.roomId === payload.roomId
-      })
+    setMessageDataInRoom: (state, { payload }: PayloadType<MessageForm>) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
 
       if (index === -1) {
-        state.messageFormData.push({ ...payload.data, roomId: payload.roomId })
+        state.messageFormData.push({ ...payload, room_id: state.currentRoomId })
       } else {
-        state.messageFormData[index] = { ...payload.data, roomId: payload.roomId }
+        state.messageFormData[index] = { ...payload, room_id: state.currentRoomId }
       }
     },
 
-    resetMessageDataInRoom: (state, { payload }: PayloadType<string>) => {
-      const index = state.messageFormData.findIndex((item) => item.roomId === payload)
+    resetMessageDataInRoom: (state) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
       if (index === -1) return
 
-      state.messageFormData[index] = { roomId: payload }
+      state.messageFormData[index] = { room_id: state.currentRoomId }
     },
 
-    addMessageAttachment: (
-      state,
-      { payload }: PayloadType<{ data: MessageAttachment[]; roomId: string }>
-    ) => {
-      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+    addMessageAttachment: (state, { payload }: PayloadType<MessageAttachment[]>) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
       if (index === -1) return
 
       if (!state?.messageFormData[index]?.attachments?.length) {
-        state.messageFormData[index].attachments = payload.data
+        state.messageFormData[index].attachments = payload
       } else {
-        state.messageFormData[index].attachments = [
+        ;(state.messageFormData[index].attachments as any[]) = [
           ...(state.messageFormData[index]?.attachments || []),
-          ...payload.data,
+          ...payload,
         ]
       }
     },
 
-    setMessageReply: (
-      state,
-      { payload }: PayloadType<{ data: MessageReply | undefined; roomId: string }>
-    ) => {
-      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+    setMessageReply: (state, { payload }: PayloadType<MessageReply | undefined>) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
 
       if (index === -1) {
-        state.messageFormData.push({ reply_to: payload.data, roomId: payload.roomId })
+        state.messageFormData.push({ reply_to: payload, room_id: state.currentRoomId })
       } else {
-        state.messageFormData[index].reply_to = payload.data
+        state.messageFormData[index].reply_to = payload
       }
     },
 
-    setMessageText: (state, { payload }: PayloadType<{ text: string; roomId: string }>) => {
-      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+    setMessageText: (state, { payload }: PayloadType<string>) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
+
       if (index === -1) {
-        state.messageFormData.push({ roomId: payload.roomId, text: payload.text })
+        state.messageFormData.push({ room_id: state.currentRoomId, text: payload })
       } else {
-        state.messageFormData[index].text = payload.text
+        state.messageFormData[index].text = payload
       }
     },
 
@@ -119,16 +133,14 @@ const chatSlice = createSlice({
       state.profile = payload
     },
 
-    deleteMessageAttachment: (
-      state,
-      { payload }: PayloadType<{ imageId: string; roomId: string }>
-    ) => {
-      const index = state.messageFormData.findIndex((item) => item.roomId === payload.roomId)
+    deleteMessageAttachment: (state, { payload }: PayloadType<{ imageId: string }>) => {
+      if (!state.currentRoomId) return
+      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
       if (index === -1) return
 
-      state.messageFormData[index].attachments = state?.messageFormData[index]?.attachments?.filter(
-        (item) => item.id !== payload.imageId
-      )
+      state.messageFormData[index].attachments = (
+        state?.messageFormData[index]?.attachments as MessageAttachment[]
+      )?.filter((item) => item.id !== payload.imageId)
     },
   },
 })
@@ -147,4 +159,6 @@ export const {
   setCurrentMessageEmotionId,
   checkForUserDisconnectWhenTyping,
   setcurrentDetailMessageId,
+  setCurrentProfileId,
+  setCurrentRoomId,
 } = chatSlice.actions

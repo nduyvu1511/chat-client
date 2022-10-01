@@ -12,14 +12,14 @@ export type OnForwaredRoomDetail = ForwardedRef<RoomFunctionHandler>
 
 interface RoomProps {
   onSelectRoom?: (room: RoomRes) => void
-  roomId?: string
 }
 
 export const Room = forwardRef(function RoomChild(
-  { onSelectRoom, roomId }: RoomProps,
+  { onSelectRoom }: RoomProps,
   ref: OnForwaredRoomDetail
 ) {
-  const socket = useSelector((state: RootState) => state.chat.socket)
+  // const socket = useSelector((state: RootState) => state.chat.socket)
+  const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
   const [showSearch, setShowSearch] = useState<boolean>()
 
   const {

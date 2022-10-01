@@ -85,7 +85,7 @@ export type MessageReply = {
 export type MessageReactionType = "like" | "angry" | "sad" | "laugh" | "heart" | "wow"
 
 export type SendMessage = {
-  tag_ids?: string[]
+  tag_ids?: string[] | null
   attachment_ids: string[]
   location?: Lnglat
   reply_to?: {
@@ -149,12 +149,24 @@ export type MessageAttachment = {
 
 export interface MessageForm {
   tags?: TagRes[]
-  attachments?: MessageAttachment[]
+  attachments?: MessageAttachment[] | AttachmentRes[]
   location?: Lnglat
   text?: string | undefined
 }
 
 export type MessageFormData = MessageForm & {
-  roomId: string
+  room_id: string
   reply_to?: MessageReply
+}
+
+export type UserItemRes = {
+  user_id: string
+  is_online: string
+  user_name: string
+  user_avatar: string
+}
+
+export type MessageDetailRes = MessageRes & {
+  read_by: UserItemRes[]
+  un_read_by: UserItemRes[]
 }

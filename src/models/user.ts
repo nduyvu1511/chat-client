@@ -452,6 +452,8 @@ export type UserRes = Pick<
   socket_id: string
   user_id: string
   avatar: AttachmentRes
+  room_id?: string
+  is_yourself?: boolean
 }
 
 export type TokenRes = {

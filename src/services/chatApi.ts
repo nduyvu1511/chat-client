@@ -69,11 +69,15 @@ try {
 
 const chatApi = {
   createSingleChat: (params: CreateSingleChat) => {
-    return axiosClient.post("/room/single_chat", params)
+    return axiosClient.post("/room/single", params)
   },
 
   createGroupChat: (params: CreateGroupChat) => {
     return axiosClient.post("/room/group_chat", params)
+  },
+
+  getProfile: (id?: string) => {
+    return axiosClient.get(`/user/profile${id ? `?user_id=${id}` : ""}`)
   },
 
   getRoomList: ({
@@ -199,6 +203,10 @@ const chatApi = {
 
   deleteAttachment: (id: string) => {
     return axiosClient.delete(`/attachment/${id}`)
+  },
+
+  getDetailMessage: (id: string) => {
+    return axiosClient.get(`/message/detail/${id}`)
   },
 }
 
