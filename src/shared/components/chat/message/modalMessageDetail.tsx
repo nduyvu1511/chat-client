@@ -1,5 +1,5 @@
 import { blankAvatar } from "@/assets"
-import { ModalSm, UserItem, Spinner } from "@/components"
+import { ModalSm, UserItem } from "@/components"
 import { MessageDetailRes } from "@/models"
 import { setcurrentDetailMessageId, setCurrentProfileId } from "@/modules"
 import { chatApi } from "@/services"

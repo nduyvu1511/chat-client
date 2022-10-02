@@ -6,8 +6,8 @@ import { MessageItem } from "./messageItem"
 
 interface MessageProps {
   data: ListRes<MessageRes[]>
-  onLikeMessage?: (_: LikeMessage) => void
-  onUnlikeMessage?: (_: UnlikeMessage) => void
+  onReactMessage?: (_: LikeMessage) => void
+  onUndoReactMessage?: (_: UnlikeMessage) => void
   roomType: RoomType
   isFetchingMore?: boolean
   onGetMoreMessage: Function
@@ -16,8 +16,8 @@ interface MessageProps {
 
 export const Message = ({
   data,
-  onLikeMessage,
-  onUnlikeMessage,
+  onReactMessage,
+  onUndoReactMessage,
   roomType,
   isFetchingMore,
   onGetMoreMessage,
@@ -34,12 +34,11 @@ export const Message = ({
     >
       <InfiniteScroll
         inverse
-        className="p-24"
+        className="p-24 pr-12"
         scrollableTarget="messageScrollable"
         loader={null}
         hasMore={data.has_more}
         next={() => {
-          console.log("fetch more messages")
           onGetMoreMessage()
         }}
         dataLength={data?.data?.length}
@@ -63,20 +62,29 @@ export const Message = ({
                 !moment(item?.created_at).isSame(moment(nextMsg?.created_at), "date")
 
               return (
-                <MessageItem
-                  roomType={roomType}
-                  onResendMessage={onResendMessage}
-                  onClickReplyMsg={handleRedirectToReplyMessage}
-                  className={`${roomType === "group" ? "flex-1" : ""}`}
-                  isLast={isLast}
-                  shouldBreak={shouldBreak}
-                  onLikeMessage={onLikeMessage}
-                  onUnlikeMessage={onUnlikeMessage}
-                  lastMessage={data.data?.[data?.data?.length - 1]}
-                  key={item.message_id}
-                  data={item}
-                  shouldShowDate={shouldShowDate}
-                />
+                <>
+                  {shouldShowDate ? (
+                    <div className="flex-center text-xs my-24">
+                      <span className="mx-8">
+                        {moment(item.created_at).format("HH:mm DD/MM/YYYY")}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  <MessageItem
+                    key={item.message_id}
+                    roomType={roomType}
+                    onResendMessage={onResendMessage}
+                    onClickReplyMsg={handleRedirectToReplyMessage}
+                    // className={`${roomType === "group" ? "flex-1" : ""}`}
+                    isLast={isLast}
+                    shouldBreak={shouldBreak}
+                    onReactMessage={onReactMessage}
+                    onUndoReactMessage={onUndoReactMessage}
+                    lastMessage={data.data?.[data?.data?.length - 1]}
+                    data={item}
+                  />
+                </>
               )
             })
           : null}

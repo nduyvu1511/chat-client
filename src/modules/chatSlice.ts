@@ -1,10 +1,13 @@
 import {
+  AttachmentRes,
   MessageAttachment,
   MessageForm,
   MessageFormData,
   MessageReply,
   PayloadType,
+  RoomInfoRes,
   RoomTypingRes,
+  TopMemberRes,
   UserRes,
 } from "@/models"
 import { createSlice } from "@reduxjs/toolkit"
@@ -19,6 +22,8 @@ interface ChatSlice {
   currentDetailMessageId: string | undefined
   currentProfileId: string | undefined
   currentRoomId: string | undefined
+  currentPreviewImages: string[] | undefined
+  currentRoomInfo: RoomInfo | undefined
 }
 
 const initialState: ChatSlice = {
@@ -30,6 +35,12 @@ const initialState: ChatSlice = {
   currentDetailMessageId: undefined,
   currentProfileId: undefined,
   currentRoomId: undefined,
+  currentPreviewImages: undefined,
+  currentRoomInfo: undefined,
+}
+
+type RoomInfo = RoomInfoRes & {
+  members: TopMemberRes[]
 }
 
 const chatSlice = createSlice({
@@ -46,8 +57,32 @@ const chatSlice = createSlice({
       }
     },
 
+    setCurrentRoomInfo: (state, { payload }: PayloadType<RoomInfo | undefined>) => {
+      state.currentRoomInfo = payload
+    },
+
+    updateCurrentRoomInfo: (
+      state,
+      {
+        payload,
+      }: PayloadType<{ room_name?: string; room_avatar?: AttachmentRes | null; room_id: string }>
+    ) => {
+      if (payload.room_id !== state.currentRoomInfo?.room_id) return
+
+      if (payload.room_name) {
+        state.currentRoomInfo.room_name = payload.room_name
+      }
+      if (payload.room_avatar) {
+        state.currentRoomInfo.room_avatar = payload.room_avatar
+      }
+    },
+
     setCurrentMessageEmotionId: (state, { payload }: PayloadType<string | undefined>) => {
       state.currentMessageEmotionId = payload
+    },
+
+    setCurrentPreviewImages: (state, { payload }: PayloadType<string[] | undefined>) => {
+      state.currentPreviewImages = payload
     },
 
     setCurrentRoomId: (state, { payload }: PayloadType<string | undefined>) => {
@@ -161,4 +196,7 @@ export const {
   setcurrentDetailMessageId,
   setCurrentProfileId,
   setCurrentRoomId,
+  setCurrentPreviewImages,
+  setCurrentRoomInfo,
+  updateCurrentRoomInfo,
 } = chatSlice.actions

@@ -1,6 +1,6 @@
 import { blankAvatar } from "@/assets"
 import { useAsync } from "@/hooks"
-import { RoomRes, UserRes } from "@/models"
+import { ListRes, RoomRes, UserRes } from "@/models"
 import {
   setcurrentDetailMessageId,
   setCurrentMessageEmotionId,
@@ -8,16 +8,18 @@ import {
   setCurrentRoomId,
 } from "@/modules"
 import { chatApi } from "@/services"
+import produce from "immer"
 import moment from "moment"
 import Image from "next/image"
 import { useDispatch } from "react-redux"
-import { mutate } from "swr"
+import { mutate, useSWRConfig } from "swr"
 
 interface UserProfileProps {
   data: UserRes
 }
 
 export const UserProfile = ({ data }: UserProfileProps) => {
+  const { cache, mutate } = useSWRConfig()
   const dispatch = useDispatch()
   const { asyncHandler } = useAsync()
 
@@ -37,10 +39,25 @@ export const UserProfile = ({ data }: UserProfileProps) => {
     } else {
       asyncHandler<RoomRes>({
         fetcher: chatApi.createSingleChat({ partner_id: data.user_id }),
-        onSuccess: (res) => {
-          mutate("get_room_list")
+        onSuccess: (data) => {
+          const roomList: ListRes<RoomRes[]> = cache.get("get_room_list")
+
+          if (!roomList?.data?.length) {
+            mutate("get_room_list")
+          } else {
+              mutate(
+              "get_room_list",
+              produce(roomList, (draft) => {
+                draft.total += 1
+                draft.offset += 1
+                draft.data.unshift(data)
+              })
+            ),
+              false
+          }
+
           setTimeout(() => {
-            joinRoomHandler(res.room_id)
+            joinRoomHandler(data.room_id)
           }, 100)
         },
       })

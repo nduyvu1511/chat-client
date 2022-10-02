@@ -3,7 +3,7 @@ import { MessageResponseStatus } from "@/models"
 import moment from "moment"
 import { BsArrowCounterclockwise } from "react-icons/bs"
 
-interface MessageItemStatusProps {
+interface MessageStatusProps {
   createdAt: Date
   status?: MessageResponseStatus
   showStatus: boolean
@@ -12,16 +12,16 @@ interface MessageItemStatusProps {
   onResendMessage?: () => void
 }
 
-const textStyle = "text-[10px] font-medium text-gray-color-3 leading-[16px]"
+const textStyle = "text-[11px] font-medium text-gray-color-3 leading-[16px]"
 
-export const MessageItemStatus = ({
+export const MessageStatus = ({
   createdAt,
   status,
   showStatus,
   isRead,
   className = "",
   onResendMessage,
-}: MessageItemStatusProps) => {
+}: MessageStatusProps) => {
   return (
     <div className={`${className}`}>
       <div className={`flex items-center`}>

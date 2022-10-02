@@ -75,7 +75,7 @@ export const RoomItem = ({
         {data?.last_message?.message_id && type === "room" ? (
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-10 text-gray-color-6 font-medium leading-[18px] mb-2">
+              <p className="text-10 text-gray-color-6 font-medium leading-[18px] mb-4">
                 {data?.last_message?.is_author ? "Bạn: " : data.last_message?.author_name}
               </p>
               <p

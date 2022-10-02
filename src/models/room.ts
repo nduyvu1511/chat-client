@@ -158,3 +158,24 @@ export interface RoomTypingRes {
   user_name: string
   room_id: string
 }
+
+export type UpdateRoomInfoForm = Partial<Pick<IRoom, "room_name" | "room_avatar_id">>
+
+export type UpdateRoomInfo = UpdateRoomInfoForm & {
+  room_id: string
+}
+
+export interface RoomInfoRes {
+  room_id: string
+  room_name: string | null
+  room_avatar?: AttachmentRes | null
+  room_type: RoomType
+  member_count: number
+}
+
+export interface TopMemberRes {
+  user_id: string
+  user_avatar: string
+  user_name: string
+  is_online: boolean
+}

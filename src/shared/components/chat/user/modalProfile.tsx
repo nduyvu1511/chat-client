@@ -17,8 +17,6 @@ export const ModalProfile = ({ userId }: Props) => {
     () => chatApi.getProfile(userId).then((res) => res.data)
   )
 
-  console.log({ data })
-
   const closeModal = () => {
     dispatch(setCurrentProfileId(undefined))
   }

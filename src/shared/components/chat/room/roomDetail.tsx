@@ -11,11 +11,12 @@ import {
   SendMessageData,
   UnlikeMessage,
 } from "@/models"
+import { setCurrentRoomInfo } from "@/modules"
 import { chatApi } from "@/services"
 import { AxiosResponse } from "axios"
 import produce from "immer"
 import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from "react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import useSWR, { mutate } from "swr"
 import { Message, MessageForm } from "../message"
 import { RoomDetailModals } from "./roomDetailModals"
@@ -31,6 +32,7 @@ export const RoomDetail = forwardRef(function RoomChild(
   { onSendMessage }: RoomDetailProps,
   ref: OnForwaredRoomDetail
 ) {
+  const dispatch = useDispatch()
   const socket = useSelector((state: RootState) => state.chat.socket)
   const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
 
@@ -159,15 +161,36 @@ export const RoomDetail = forwardRef(function RoomChild(
       ) : (
         <>
           <div className="h-[70px] border-b border-border-color border-solid">
-            <RoomHeader data={data as any} />
+            <RoomHeader
+              onClick={() => {
+                if (data?.room_id) {
+                  dispatch(
+                    setCurrentRoomInfo({
+                      member_count: data?.member_count,
+                      members: data.members?.data?.map((item) => ({
+                        user_id: item.user_id,
+                        user_avatar: item.avatar.thumbnail_url,
+                        user_name: item.user_name,
+                        is_online: item?.is_online,
+                      })),
+                      room_id: data.room_id,
+                      room_name: data.room_name,
+                      room_type: data.room_type,
+                      room_avatar: data?.room_avatar,
+                    })
+                  )
+                }
+              }}
+              data={data as any}
+            />
           </div>
 
           {messages?.data?.length ? (
             <Message
               isFetchingMore={isFetchingMore}
               roomType={data?.room_type as RoomType}
-              onLikeMessage={handleReactionMessage}
-              onUnlikeMessage={handleUndoMesasgeReaction}
+              onReactMessage={handleReactionMessage}
+              onUndoReactMessage={handleUndoMesasgeReaction}
               data={messages}
               onGetMoreMessage={() => getMoreMessages()}
               onResendMessage={resendMessage}

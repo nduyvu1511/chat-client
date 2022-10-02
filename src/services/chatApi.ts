@@ -8,6 +8,7 @@ import {
   LoginToSocket,
   QueryCommonParams,
   SendMessage,
+  UpdateRoomInfo,
 } from "@/models"
 import { setProfile } from "@/modules"
 import axios from "axios"
@@ -207,6 +208,11 @@ const chatApi = {
 
   getDetailMessage: (id: string) => {
     return axiosClient.get(`/message/detail/${id}`)
+  },
+
+  updateRoomInfo: (params: UpdateRoomInfo) => {
+    const { room_id, ...rest } = params
+    return axiosClient.patch(`/room/info/${room_id}`, rest)
   },
 }
 

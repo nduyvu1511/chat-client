@@ -1294,3 +1294,22 @@ input[type="number"] {
   &-image {
   }
 }
+
+.modal-room-info {
+  & .modal-sm {
+    max-width: 350px;
+  }
+}
+
+@keyframes opacity {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-sm {
+  animation: 0.1s linear opacity;
+}

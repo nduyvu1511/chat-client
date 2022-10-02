@@ -64,7 +64,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
     },
   }))
 
-  function timeoutFunction() {
+  const timeoutFunction = () => {
     setTyping(false)
     user &&
       socket?.emit("stop_typing", {
@@ -162,7 +162,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
         ) : null}
 
         {messageFormData?.attachments?.length ? (
-          <div className="h-[160px] absolute top-[-160px] z-[100] left-0 right-0 bg-white-color px-24">
+          <div className="h-[172px] absolute top-[-172px] z-[100] left-0 right-0 bg-white-color px-24">
             <ImagePickupPreview
               onClose={() =>
                 dispatch(setMessageDataInRoom({ ...messageFormData, attachments: [] }))
@@ -175,11 +175,11 @@ export const MessageForm = forwardRef(function MessageFormChild(
         ) : null}
 
         {messageFormData?.reply_to ? (
-          <div className="px-24 h-[88px] flex-center absolute top-[-88px] left-0 right-0 bg-white-color z-[100]">
-            <div className="p-12 flex-1 rounded-[8px] relative bg-bg">
+          <div className="px-24 pt-12 absolute top-[-76px] border-t border-border-color border-solid left-0 right-0 bg-white-color z-[200]">
+            <div className="p-12 flex-1 rounded-[8px] h-[64px] relative bg-bg pt-12">
               <div className="flex items-center">
                 {messageFormData?.reply_to?.attachment?.id ? (
-                  <div className="mr-12 w-[36px] relative overflow-hidden h-[36px] rounded-[2px]">
+                  <div className="mr-12 w-[36px] relative overflow-hidden h-[36px] rounded-[4px]">
                     <Image
                       src={messageFormData.reply_to.attachment.url}
                       layout="fill"

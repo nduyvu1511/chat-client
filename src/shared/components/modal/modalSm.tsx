@@ -1,5 +1,5 @@
-import { CloseThickIcon } from "@/assets"
-import React, { ReactNode } from "react"
+import { ArrowLeft2Icon, CloseThickIcon } from "@/assets"
+import { ReactNode } from "react"
 import { Spinner } from "../common"
 
 interface ModalSmProps {
@@ -9,6 +9,7 @@ interface ModalSmProps {
   className?: string
   showLoading?: boolean
   zIndex?: number
+  onBack?: Function
 }
 
 export const ModalSm = ({
@@ -18,6 +19,7 @@ export const ModalSm = ({
   onClose,
   showLoading,
   zIndex = 3000,
+  onBack,
 }: ModalSmProps) => {
   return (
     <>
@@ -27,6 +29,11 @@ export const ModalSm = ({
       >
         <div className="h-[56px] border-b border-solid border-gray-color-1 w-full flex px-16 md:px-16 items-center">
           <div className="flex-1 flex justify-start">
+            {onBack ? (
+              <button className="mr-16" onClick={() => onBack?.()}>
+                <ArrowLeft2Icon className="w-[8px] h-[16px]" />
+              </button>
+            ) : null}
             <p className="text-16 font-semibold leading-20 text-center text-blue-8 line-clamp-1 word-break">
               {title}
             </p>

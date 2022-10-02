@@ -1,22 +1,27 @@
 import { AttachmentRes } from "@/models"
+import { setCurrentPreviewImages } from "@/modules"
 import Image from "next/image"
+import { useDispatch } from "react-redux"
 
-interface MessageItemImageProps {
+interface MessageImagesProps {
   data: AttachmentRes[]
   className?: string
   onClick?: (url: string) => void
 }
 
-export const MessageItemImage = ({ data, onClick, className }: MessageItemImageProps) => {
+export const MessageImages = ({ data, onClick, className }: MessageImagesProps) => {
+  const dispatch = useDispatch()
+
   return (
-    <div className={`flex flex-wrap w-full ${className}`}>
+    <div
+      onClick={() => dispatch(setCurrentPreviewImages(data.map((item) => item.url)))}
+      className={`flex flex-wrap w-full ${className}`}
+    >
       {data.map((item, index) => (
         <div
           key={item.attachment_id}
           className={`relative aspect-[4/3] rounded-[5px] overflow-hidden ${
             data.length > 1 ? "border border-solid border-gray-05" : ""
-          } ${
-            data?.length === 1 ? "rounded-br-none rounded-bl-none" : ""
           } hover:opacity-90 cursor-pointer ${
             data.length - 1 === index
               ? `${index % 2 === 0 ? "w-full" : "w-[50%]"}`

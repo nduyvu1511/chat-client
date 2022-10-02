@@ -6,6 +6,7 @@ interface RoomAvatarProps {
   isOnline?: boolean
   avatarGroup?: string[]
   isGroup: boolean
+  onClick?: Function
   memberCount?: number
 }
 
@@ -15,9 +16,13 @@ export const Avatar = ({
   avatarGroup,
   isGroup,
   memberCount = 2,
+  onClick,
 }: RoomAvatarProps) => {
   return (
-    <div className="w-[46px] h-[46px] rounded-[50%] relative">
+    <div
+      onClick={() => onClick?.()}
+      className="w-[46px] h-[46px] rounded-[50%] relative cursor-pointer"
+    >
       {isGroup && !avatar ? (
         <div className="flex-center flex-wrap">
           <>
