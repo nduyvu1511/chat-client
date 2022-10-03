@@ -76,7 +76,6 @@ export const Message = ({
                     roomType={roomType}
                     onResendMessage={onResendMessage}
                     onClickReplyMsg={handleRedirectToReplyMessage}
-                    // className={`${roomType === "group" ? "flex-1" : ""}`}
                     isLast={isLast}
                     shouldBreak={shouldBreak}
                     onReactMessage={onReactMessage}

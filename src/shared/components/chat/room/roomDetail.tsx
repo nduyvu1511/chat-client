@@ -1,23 +1,18 @@
 import { Spinner } from "@/components"
 import { RootState } from "@/core/store"
-import { useMessage } from "@/hooks"
+import { useMessage, useRoomDetail } from "@/hooks"
 import {
   LikeMessage,
   MessageRes,
   OnResetParams,
   RoomDetailFunctionHandler,
-  RoomDetailRes,
   RoomType,
   SendMessageData,
   UnlikeMessage,
 } from "@/models"
 import { setCurrentRoomInfo } from "@/modules"
-import { chatApi } from "@/services"
-import { AxiosResponse } from "axios"
-import produce from "immer"
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from "react"
+import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import useSWR, { mutate } from "swr"
 import { Message, MessageForm } from "../message"
 import { RoomDetailModals } from "./roomDetailModals"
 import { RoomHeader } from "./roomHeader"
@@ -32,32 +27,23 @@ export const RoomDetail = forwardRef(function RoomChild(
   { onSendMessage }: RoomDetailProps,
   ref: OnForwaredRoomDetail
 ) {
+  const messageFormRef = useRef<OnResetParams>(null)
   const dispatch = useDispatch()
+
   const socket = useSelector((state: RootState) => state.chat.socket)
   const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
 
-  const messageFormRef = useRef<OnResetParams>(null)
-  const {
-    data,
-    error,
-    mutate: mutateRoomDetail,
-  } = useSWR(
-    roomId ? `get_room_detail_${roomId}` : null,
-    roomId
-      ? () =>
-          chatApi.getRoomDetail(roomId).then((res: AxiosResponse<RoomDetailRes>) => {
-            const data = res?.data
-            mutate(`get_messages_in_room_${roomId}`, data.messages, false)
-            return data
-          })
-      : null
-  )
+  const { changeStatusOfRoom, data, isFirstLoading } = useRoomDetail({
+    roomId,
+    callback: (res) => {
+      socket?.emit("read_message", res)
+    },
+  })
   const {
     appendMessage,
     sendMessage,
     confirmReadMessage,
     data: messages,
-    confirmReadAllMessageInRoom,
     likeMessage,
     unlikeMessage,
     mutateByMessageRes,
@@ -72,25 +58,7 @@ export const RoomDetail = forwardRef(function RoomChild(
       appendMessage(mes)
     },
     changeStatusOfRoom: (params) => {
-      if (!data) return
-      if (params.type === "logout") {
-        if (data.members.data?.length === 2) {
-          mutateRoomDetail(
-            produce(data, (draft) => {
-              draft.is_online = false
-              draft.offline_at = new Date()
-            }),
-            false
-          )
-        }
-      } else {
-        mutateRoomDetail(
-          produce(data, (draft) => {
-            draft.is_online = true
-          }),
-          false
-        )
-      }
+      changeStatusOfRoom(params)
     },
     changeMesageStatus: async (params) => {
       confirmReadMessage(params)
@@ -102,23 +70,6 @@ export const RoomDetail = forwardRef(function RoomChild(
       mutatePartnerReactionMessage(params)
     },
   }))
-
-  useEffect(() => {
-    if (!socket) return
-    if (!data?.messages?.data?.length) return
-
-    const lastMessage = data?.messages?.data?.[data?.messages?.data?.length - 1]
-    if (lastMessage.is_author || lastMessage.is_read) return
-    socket.emit("read_message", lastMessage)
-    console.log("read_message", lastMessage)
-
-    confirmReadAllMessageInRoom(roomId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.messages?.data, roomId])
-
-  useEffect(() => {
-    ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
-  }, [roomId])
 
   const handleSendMessage = (val: SendMessageData) => {
     if (!roomId) return
@@ -156,7 +107,7 @@ export const RoomDetail = forwardRef(function RoomChild(
 
   return (
     <div className="flex flex-col flex-1 chat-message bg-white-color">
-      {data === undefined && error === undefined ? (
+      {isFirstLoading ? (
         <Spinner />
       ) : (
         <>

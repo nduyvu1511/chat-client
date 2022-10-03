@@ -1,4 +1,4 @@
-import { blankAvatar } from "@/assets"
+import { blankAvatar, imageBlur } from "@/assets"
 import Image from "next/image"
 
 interface RoomAvatarProps {
@@ -36,6 +36,7 @@ export const Avatar = ({
                 className={`relative w-[23px] h-[23px] rounded-[50%] overflow-hidden border border-solid border-border-color-2 bg-white-color`}
               >
                 <Image
+                  blurDataURL={imageBlur}
                   src={item || blankAvatar}
                   alt=""
                   className="rounded-[50%]"
@@ -56,6 +57,7 @@ export const Avatar = ({
         </div>
       ) : (
         <Image
+          blurDataURL={imageBlur}
           src={avatar || blankAvatar}
           alt=""
           className="rounded-[50%]"

@@ -117,3 +117,8 @@ export const MESSAGE_EMOTION_ICON = {
   like: likeIcon,
   angry: angryIcon,
 }
+
+export const MESSAGE_OPTION_MENU_SIZE = {
+  width: 180,
+  height: 168,
+}

@@ -1,5 +1,5 @@
 import { Spinner } from "@/components"
-import { useChat } from "@/hooks"
+import { useChat, useDetectWindowFocus } from "@/hooks"
 import {
   MessageRes,
   RoomDetailFunctionHandler,
@@ -27,8 +27,13 @@ export const Chat = () => {
   const roomDetailRef = useRef<RoomDetailFunctionHandler>(null)
   const roomRef = useRef<RoomFunctionHandler>(null)
 
-  // const [roomId, setRoomId] = useState<string | undefined>()
   const [isConnected, setConnected] = useState<boolean>(false)
+
+  window.addEventListener("visibilitychange", () => {
+    document.title = document.visibilityState
+  })
+
+  const isWindowFocus = useDetectWindowFocus()
 
   useEffect(() => {
     // Connect to socket
@@ -64,15 +69,17 @@ export const Chat = () => {
 
       // Message listener
       socket.on("receive_message", (data: MessageRes) => {
-        console.log("receive_message")
+        console.log({ isWindowFocus })
+
+        ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
         roomDetailRef.current?.appendMessage(data)
         roomRef.current?.changeOrderAndAppendLastMessage(data)
         socket.emit("read_message", data)
         confirmReadMessage(data.message_id)
       })
-      socket.on("confirm_read_message", (data) => {
+      socket.on("confirm_read_message", (data: MessageRes) => {
         roomDetailRef.current?.changeMesageStatus(data)
-        console.log("confirm_read_message")
+        console.log("confirm_read_message", data?.message_text)
       })
 
       // Listen to message when you are not in that room
@@ -82,21 +89,17 @@ export const Chat = () => {
       })
 
       socket.on("like_message", (payload: MessageRes) => {
-        console.log("like message event: ", payload)
         roomDetailRef.current?.mutatePartnerReactionMessage(payload)
       })
       socket.on("unlike_message", (payload: MessageRes) => {
         roomDetailRef.current?.mutatePartnerReactionMessage(payload)
-        console.log("unlike message event: ", payload)
       })
 
       // Typing listener
       socket.on("start_typing", (payload: RoomTypingRes) => {
-        console.log("start_typing", payload)
         dispatch(setCurrentTyping(payload))
       })
       socket.on("stop_typing", (payload: RoomTypingRes) => {
-        console.log("stop_typing", payload)
         dispatch(setCurrentTyping(undefined))
       })
     })
@@ -115,16 +118,7 @@ export const Chat = () => {
 
   const handleSelectRoom = (room: RoomRes) => {
     dispatch(setCurrentRoomId(room.room_id))
-    // if (roomId === room.room_id) return
-
-    // setRoomId(room.room_id)
-
-    // if (!socketIo.current?.id) return
-    // const socket = socketIo.current
-    // if (roomId) {
-    //   socket.emit("leave_room", roomId)
-    // }
-    // socket.emit("join_room", room.room_id)
+    ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
   }
 
   if (!isConnected) return <Spinner size={36} />

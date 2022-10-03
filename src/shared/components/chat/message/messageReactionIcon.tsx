@@ -1,3 +1,4 @@
+import { imageBlur } from "@/assets"
 import { MESSAGE_EMOTION_ICON } from "@/helper"
 import { MessageReactionType } from "@/models"
 import Image from "next/image"
@@ -16,7 +17,13 @@ export const MessageReactionIcon = ({
 }: MessageReactionIconProps) => {
   return (
     <span style={{ height: size, width: size }} className={`relative ${className}`}>
-      <Image src={MESSAGE_EMOTION_ICON[emotion_type]} alt="" layout="fill" objectFit="cover" />
+      <Image
+        blurDataURL={imageBlur}
+        src={MESSAGE_EMOTION_ICON[emotion_type]}
+        alt=""
+        layout="fill"
+        objectFit="cover"
+      />
     </span>
   )
 }

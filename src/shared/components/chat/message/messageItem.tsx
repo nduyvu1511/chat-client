@@ -1,6 +1,6 @@
+import { imageBlur } from "@/assets"
 import { Map } from "@/components"
 import { getMessageDescription } from "@/helper"
-import { useClickOutside } from "@/hooks"
 import {
   LikeMessage,
   Lnglat,
@@ -54,15 +54,9 @@ export const MessageItem = ({
   onResendMessage,
   roomType,
 }: MessageItemProps) => {
-  const messageOptionMenuRef = useRef<HTMLDivElement>(null)
-  const menuOptionRef = useRef<HTMLDivElement>(null)
-
   const dispatch = useDispatch()
-  const [messageMenuPosition, setMessageMenuPosition] = useState<
-    { top: number; left?: number; right?: number } | undefined
-  >(undefined)
-
-  useClickOutside([menuOptionRef], () => setMessageMenuPosition(undefined))
+  const messageOptionMenuRef = useRef<HTMLDivElement>(null)
+  const [setMessageOptionMenu, setShowMessageOptionMenu] = useState<boolean>()
 
   const generateGoogleMapUrl = ({ lat, lng }: Lnglat) => {
     window.open(`https://www.google.com/maps/place/${lat},${lng}`, "_blank")
@@ -105,21 +99,7 @@ export const MessageItem = ({
   }
 
   const handleShowMessageOption = () => {
-    console.log(messageOptionMenuRef.current)
-    const top = messageOptionMenuRef.current?.offsetHeight || 0
-    const left = messageOptionMenuRef.current?.offsetWidth || 0
-    const right = messageOptionMenuRef.current?.offsetWidth || 0
-
-    const obj: any = {
-      top,
-    }
-    if (data.is_author) {
-      obj.right = right
-    } else {
-      obj.left = left
-    }
-
-    setMessageMenuPosition(obj)
+    setShowMessageOptionMenu(true)
   }
 
   return (
@@ -128,17 +108,17 @@ export const MessageItem = ({
         data?.attachments?.length || data?.location || data?.tags?.length ? "mb-24" : "mb-4"
       } ${isLast ? "mb-16" : ""}`}
     >
-      {messageMenuPosition ? (
-        <div ref={menuOptionRef}>
-          <MessageOptionMenu
-            onViewDetail={() => dispatch(setcurrentDetailMessageId(data.message_id))}
-            className={`group-hover:block w-fit ${
-              !data?.is_author ? "right-[calc(0%-120px)]" : "left-[calc(0%-120px)]"
-            }`}
-            position={messageMenuPosition}
-            messageId={data.message_id}
-          />
-        </div>
+      {setMessageOptionMenu ? (
+        <MessageOptionMenu
+          onClose={() => setShowMessageOptionMenu(false)}
+          onViewDetail={() => dispatch(setcurrentDetailMessageId(data.message_id))}
+          className="group-hover:block w-fit"
+          messageId={data.message_id}
+          showOn={data.is_author ? "right" : "left"}
+          onCopy={() => {
+            data?.message_text && navigator.clipboard.writeText(data.message_text)
+          }}
+        />
       ) : null}
 
       <div className={`flex w-full group ${data.is_author ? "flex-row-reverse" : ""}`}>
@@ -152,6 +132,7 @@ export const MessageItem = ({
           >
             {shouldBreak ? (
               <Image
+                blurDataURL={imageBlur}
                 src={data.author.author_avatar.thumbnail_url}
                 alt=""
                 layout="fill"
@@ -165,9 +146,9 @@ export const MessageItem = ({
           {!data.attachments?.length ? (
             <div
               ref={messageOptionMenuRef}
-              className={`relative w-fit message-option-absolute ${
-                data.is_author ? "ml-auto" : ""
-              }`}
+              className={`relative w-fit message-option-absolute message-item-child-${
+                data.message_id
+              } ${data.is_author ? "ml-auto" : ""}`}
             >
               {!data?.status || data.status === "fulfilled" ? (
                 <MessageOption
@@ -184,7 +165,9 @@ export const MessageItem = ({
 
               <div
                 className={`min-w-[56px] rounded-[8px] ${
-                  isLast || data?.message_text || data?.reaction_count ? "p-12" : ""
+                  isLast || data?.message_text || data?.reaction_count || data?.location
+                    ? "p-12"
+                    : ""
                 } ${data?.attachments?.length ? "" : "w-fit"} ${
                   data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"
                 }`}
@@ -257,7 +240,10 @@ export const MessageItem = ({
               </div>
             </div>
           ) : data?.attachments?.length ? (
-            <div ref={messageOptionMenuRef} className="relative w-full">
+            <div
+              ref={messageOptionMenuRef}
+              className={`relative w-full message-item-child-${data.message_id}`}
+            >
               <MessageOption
                 onShowMessageOption={handleShowMessageOption}
                 value={data?.your_reaction}
@@ -284,11 +270,7 @@ export const MessageItem = ({
               ) : null}
 
               <div className="relative">
-                <MessageImages
-                  data={data.attachments}
-                  className="mt-4"
-                  onClick={(url) => console.log(url)}
-                />
+                <MessageImages data={data.attachments} className="mt-4" />
 
                 {data.reaction_count ? (
                   <MessageReactionCount

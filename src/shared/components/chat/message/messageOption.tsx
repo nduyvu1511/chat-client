@@ -16,11 +16,6 @@ interface MessageOptionProps {
   onShowMessageOption?: Function
 }
 
-interface Position {
-  left: number
-  top: number
-}
-
 export const MessageOption = ({
   onReaction,
   onUndoReaction,
@@ -96,45 +91,6 @@ export const MessageOption = ({
           </button>
         </div>
       </div>
-
-      {/* {optionPosition ? (
-        <div
-          style={{ top: -24, left: -48 }}
-          ref={optionRef}
-          className="rounded-[8px] z-[108] left-0 absolute bg-white-color shadow-md border border-solid border-border-color p-8"
-        >
-          <button
-            onClick={() => {
-              seOptionPosition(undefined)
-              onViewDetail?.()
-            }}
-            className="flex items-center py-[14px] w-full px-12 hover:bg-bg hover:rounded-[5px]"
-          >
-            <EyeShowIcon className="mr-8" />
-            <p className="text-sm leading-20 whitespace-nowrap">Xem chi tiết</p>
-          </button>
-          <button
-            onClick={() => {
-              seOptionPosition(undefined)
-              onSaveToNote?.()
-            }}
-            className="flex items-center py-[14px] w-full px-12 hover:bg-bg hover:rounded-[5px]"
-          >
-            <NoteIcon2 className="mr-8" />
-            <p className="text-sm leading-20 whitespace-nowrap">Lưu vào ghi chú</p>
-          </button>
-          <button
-            onClick={() => {
-              seOptionPosition(undefined)
-              onDelete?.()
-            }}
-            className="flex items-center py-[14px] w-full px-12 hover:bg-bg hover:rounded-[5px]"
-          >
-            <TrashIcon className="mr-8" />
-            <p className="text-sm leading-20 whitespace-nowrap">Xóa tin nhắn</p>
-          </button>
-        </div>
-      ) : null} */}
     </div>
   )
 }

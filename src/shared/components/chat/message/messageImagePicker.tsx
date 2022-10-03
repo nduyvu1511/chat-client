@@ -1,4 +1,4 @@
-import { CloseThickIcon, UploadIcon } from "@/assets"
+import { CloseThickIcon, imageBlur, UploadIcon } from "@/assets"
 import { Spinner } from "@/components"
 import { MessageAttachment } from "@/models"
 import Image from "next/image"
@@ -55,7 +55,13 @@ export const ImagePickupPreview = ({
               <IoMdClose className="text-white-color text-14 fill-white-color" />
             </button>
 
-            <Image src={item.previewImage} alt="" objectFit="cover" layout="fill" />
+            <Image
+              blurDataURL={imageBlur}
+              src={item.previewImage}
+              alt=""
+              objectFit="cover"
+              layout="fill"
+            />
           </div>
         ))}
 

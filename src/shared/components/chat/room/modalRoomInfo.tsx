@@ -1,6 +1,14 @@
 import { CommonAvatar, ModalSm, UserItem } from "@/components"
 import { useAsync } from "@/hooks"
-import { AttachmentRes, RoomInfoRes, TopMemberRes, UpdateRoomInfoForm } from "@/models"
+import {
+  AttachmentRes,
+  ListRes,
+  RoomDetailRes,
+  RoomInfoRes,
+  RoomRes,
+  TopMemberRes,
+  UpdateRoomInfoForm,
+} from "@/models"
 import {
   setCurrentProfileId,
   setCurrentRoomId,
@@ -8,9 +16,11 @@ import {
   updateCurrentRoomInfo,
 } from "@/modules"
 import { chatApi } from "@/services"
+import produce from "immer"
 import { useState } from "react"
 import { FiEdit3 } from "react-icons/fi"
 import { useDispatch } from "react-redux"
+import { useSWRConfig } from "swr"
 import { ModalChangeAvatar } from "./modalChangeRoomAvatar"
 import { ModalChangeRoomName } from "./modalChangeRoomName"
 
@@ -19,6 +29,7 @@ interface ModalRoomInfoProps {
 }
 
 export const ModalRoomInfo = ({ data }: ModalRoomInfoProps) => {
+  const { cache, mutate } = useSWRConfig()
   const { asyncHandler } = useAsync()
   const dispatch = useDispatch()
   const [showModalChangeRoomName, setShowModalChangeRoomName] = useState<boolean>(false)
@@ -42,6 +53,57 @@ export const ModalRoomInfo = ({ data }: ModalRoomInfoProps) => {
     })
   }
 
+  const mutateRoomList = (params: RoomInfoRes) => {
+    const roomList: ListRes<RoomRes[]> = cache.get("get_room_list")
+
+    if (roomList?.data) {
+      mutate(
+        "get_room_list",
+        produce(roomList, (draft) => {
+          draft.data = draft.data.map((item) => {
+            if (item.room_id === data.room_id) {
+              if (params.room_name) {
+                item.room_name = params.room_name
+              }
+
+              if (params?.room_avatar?.attachment_id) {
+                data.room_avatar = data.room_avatar
+              }
+
+              return item
+            }
+            return item
+          })
+        }),
+        false
+      )
+    } else {
+      mutate("get_room_list")
+    }
+  }
+
+  const mutateRoomDetail = (params: RoomInfoRes) => {
+    const roomDetail: ListRes<RoomDetailRes> = cache.get(`get_room_detail_${data.room_id}`)
+
+    if (roomDetail?.data) {
+      mutate(
+        `get_room_detail_${data.room_id}`,
+        produce(roomDetail, (draft) => {
+          if (params.room_name) {
+            draft.data.room_name = params.room_name
+          }
+
+          if (params?.room_avatar?.attachment_id) {
+            draft.data.room_avatar = params.room_avatar
+          }
+        }),
+        false
+      )
+    } else {
+      mutate(`get_room_detail_${data.room_id}`)
+    }
+  }
+
   const updateRoomInfo = async (params: UpdateRoomInfoForm, cb?: Function) => {
     asyncHandler<RoomInfoRes>({
       fetcher: chatApi.updateRoomInfo({
@@ -58,8 +120,8 @@ export const ModalRoomInfo = ({ data }: ModalRoomInfoProps) => {
           })
         )
         cb?.()
-        // mutate("get_room_list")
-        // mutate("get_room_list")
+        mutateRoomDetail(data)
+        mutateRoomList(data)
       },
     })
   }

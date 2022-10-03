@@ -15,7 +15,7 @@ export const CommonAvatar = ({ size, className, url, onClick }: CommonAvatarProp
       style={{ width: size, height: size }}
       className={`rounded-[50%] relative overflow-hidden cursor-pointer ${className}`}
     >
-      <Image src={url || blankAvatar} alt="" objectFit="cover" layout="fill" />
+      <Image loading="lazy" src={url || blankAvatar} alt="" objectFit="cover" layout="fill" />
     </span>
   )
 }

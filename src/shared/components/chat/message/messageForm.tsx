@@ -1,4 +1,4 @@
-import { CloseThickIcon } from "@/assets"
+import { CloseThickIcon, imageBlur } from "@/assets"
 import { Map, Modal } from "@/components"
 import { RootState } from "@/core/store"
 import { useClickOutside } from "@/hooks"
@@ -97,11 +97,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
     if (!attachments && !location && !tags && !text) return
 
     if (user) {
-      socket?.emit("stop_typing", {
-        room_id: roomId,
-        user_name: user.user_name,
-        user_id: user.user_id,
-      })
+      timeoutFunction()
+      clearTimeout(timeout.current)
     }
     onSubmit?.(messageFormData)
   }
@@ -153,8 +150,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
         } ${className || ""}`}
       >
         {/* Typing */}
-        {currentTyping ? (
-          <div className="absolute left-0 top-[-24px] flex-center px-24 py-4 z-[100] bg-white-color">
+        {currentTyping?.room_id === roomId ? (
+          <div className="absolute left-0 top-[-26px] flex-center px-24 py-4 z-[100] bg-white-color">
             <p className="text-xs line-clamp-1 word-break">
               {currentTyping?.user_name} đang soạn tin nhắn...
             </p>
@@ -181,6 +178,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
                 {messageFormData?.reply_to?.attachment?.id ? (
                   <div className="mr-12 w-[36px] relative overflow-hidden h-[36px] rounded-[4px]">
                     <Image
+                      blurDataURL={imageBlur}
                       src={messageFormData.reply_to.attachment.url}
                       layout="fill"
                       alt=""
@@ -251,6 +249,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
               className="form-input border-none bg-gray-05 pl-[48px] h-full w-full text-sm text-gray-color-4 message-form-input"
             />
           </div>
+          {/* <MessageFormInput /> */}
 
           <button
             onClick={() => setShowMap(true)}

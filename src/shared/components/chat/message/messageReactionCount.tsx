@@ -20,12 +20,12 @@ export const MessageReactionCount = ({
       onClick={() => onClick()}
       className={`px-12 py-6 bg-white-color rounded-[25px] flex items-center w-fit cursor-pointer ${className}`}
     >
-      <span className="text-xs font-semibold mr-6">{count}</span>
+      <span className="text-sm leading-[16px] font mr-6">{count}</span>
       {_.uniq(reactions)
         .slice(0, 3)
         ?.map((item, index) => (
           <MessageReactionIcon
-            className={`mr-4 last:mr-0`}
+            className={`mr-2 last:mr-0`}
             key={index}
             emotion_type={item}
             size={16}

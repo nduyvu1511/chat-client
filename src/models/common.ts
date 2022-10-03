@@ -89,6 +89,7 @@ export type AuthModalType =
   | "updateProfile"
   | undefined
 export type OnForwaredResetForm = ForwardedRef<{ onReset: Function }>
+export type OnForwaredSubmitText = ForwardedRef<{ onSubmit: (_: string) => void }>
 
 export interface ActivityItem<T> {
   label: string

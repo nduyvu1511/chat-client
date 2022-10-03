@@ -1,4 +1,4 @@
-import { blankAvatar } from "@/assets"
+import { blankAvatar, imageBlur } from "@/assets"
 import { useAsync } from "@/hooks"
 import { ListRes, RoomRes, UserRes } from "@/models"
 import {
@@ -6,13 +6,14 @@ import {
   setCurrentMessageEmotionId,
   setCurrentProfileId,
   setCurrentRoomId,
+  setCurrentRoomInfo,
 } from "@/modules"
 import { chatApi } from "@/services"
 import produce from "immer"
 import moment from "moment"
 import Image from "next/image"
 import { useDispatch } from "react-redux"
-import { mutate, useSWRConfig } from "swr"
+import { useSWRConfig } from "swr"
 
 interface UserProfileProps {
   data: UserRes
@@ -26,6 +27,7 @@ export const UserProfile = ({ data }: UserProfileProps) => {
   const joinRoomHandler = (roomId: string) => {
     dispatch(setCurrentRoomId(roomId))
     dispatch(setCurrentProfileId(undefined))
+    dispatch(setCurrentRoomInfo(undefined))
     dispatch(setcurrentDetailMessageId(undefined))
     dispatch(setCurrentMessageEmotionId(undefined))
     document.querySelector(`.room-item-${roomId}`)?.scrollIntoView()
@@ -45,15 +47,15 @@ export const UserProfile = ({ data }: UserProfileProps) => {
           if (!roomList?.data?.length) {
             mutate("get_room_list")
           } else {
-              mutate(
+            mutate(
               "get_room_list",
               produce(roomList, (draft) => {
                 draft.total += 1
                 draft.offset += 1
                 draft.data.unshift(data)
-              })
-            ),
+              }),
               false
+            )
           }
 
           setTimeout(() => {
@@ -69,6 +71,7 @@ export const UserProfile = ({ data }: UserProfileProps) => {
       <div className="flex-center flex-col p-16 border-b border-border-color border-solid">
         <div className="relative mb-12 w-[80px] h-[80px] rounded-[50%] overflow-hidden">
           <Image
+            blurDataURL={imageBlur}
             src={data.avatar?.thumbnail_url || blankAvatar}
             layout="fill"
             alt=""
