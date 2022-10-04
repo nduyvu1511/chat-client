@@ -43,7 +43,7 @@ export const useRoomDetail = ({ roomId, callback }: Props): Res => {
     if (!data) return
 
     if (params.type === "logout") {
-      if (data.members.data?.filter((item) => item.is_online)?.length === 2) {
+      if (data.members.data?.filter((item) => item.is_online)?.length <= 2) {
         mutateRoomDetail(
           produce(data, (draft) => {
             draft.is_online = false
@@ -53,12 +53,14 @@ export const useRoomDetail = ({ roomId, callback }: Props): Res => {
         )
       }
     } else {
-      mutateRoomDetail(
-        produce(data, (draft) => {
-          draft.is_online = true
-        }),
-        false
-      )
+      if (!data?.is_online) {
+        mutateRoomDetail(
+          produce(data, (draft) => {
+            draft.is_online = true
+          }),
+          false
+        )
+      }
     }
   }
   return {

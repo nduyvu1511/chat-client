@@ -1,9 +1,9 @@
 /**
  * @type {import('next').NextConfig}
  */
-import withImages from "next-images"
+const withImages = require("next-images")
 
-export default withImages({
+module.exports = withImages({
   reactStrictMode: false,
   images: {
     disableStaticImages: true,

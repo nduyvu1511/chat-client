@@ -146,10 +146,6 @@ const chatApi = {
     return axiosClient.delete(`/room/${roomId}/message_unread`)
   },
 
-  loginToSocket: (params: LoginToSocket) => {
-    return axiosClient.post("/user/login_to_socket", params)
-  },
-
   confirmReadMessage: (message_id: string) => {
     return axiosClient.patch(`/message/read`, { message_id })
   },

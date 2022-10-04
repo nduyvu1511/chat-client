@@ -52,7 +52,7 @@ export const RoomSearch = ({
 
         <button
           onClick={() => onClose?.()}
-          className="px-8 py-4 hover:bg-bg text-sm font-semibold rounded-[5px] ml-12"
+          className="lg:px-8 lg:py-4 hover:bg-bg text-xs lg:text-sm font-semibold rounded-[5px] ml-12"
         >
           Đóng
         </button>

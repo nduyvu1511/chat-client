@@ -56,13 +56,13 @@ export const ModalChangeRoomName = ({
           <div className="w-full flex items-center justify-end">
             <button
               onClick={() => onClose?.()}
-              className="h-[40px] px-16 text-sm font-semibold mr-12 bg-bg rounded-[4px]"
+              className="h-[40px] px-16 text-sm font-semibold mr-12 bg-bg rounded-[5px]"
             >
               Hủy
             </button>
             <button
               onClick={() => value && onSubmit?.(value)}
-              className={`h-[40px] px-16 text-sm font-semibold text-white-color rounded-[4px] ${
+              className={`h-[40px] px-16 text-sm font-semibold text-white-color rounded-[5px] ${
                 value ? "bg-primary" : "btn-disabled"
               }`}
             >

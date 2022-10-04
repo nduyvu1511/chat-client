@@ -1,12 +1,14 @@
 import { Spinner } from "@/components"
-import { useChat, useDetectWindowFocus } from "@/hooks"
+import { RootState } from "@/core/store"
+import { useBreakpoint, useChat, useDetectWindowFocus } from "@/hooks"
 import {
+  FriendStatusRes,
   MessageRes,
   RoomDetailFunctionHandler,
   RoomFunctionHandler,
   RoomRes,
   RoomTypingRes,
-  UserData,
+  UserRes,
 } from "@/models"
 import {
   checkForUserDisconnectWhenTyping,
@@ -16,101 +18,97 @@ import {
   setSocketInstance,
 } from "@/modules"
 import { useEffect, useRef, useState } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import io, { Socket } from "socket.io-client"
 import { Room, RoomDetail } from "./room"
 
 export const Chat = () => {
+  const breakpoints = useBreakpoint()
   const dispatch = useDispatch()
-  const { loginToSocket, confirmReadMessage } = useChat()
+  const isWindowFocus = useDetectWindowFocus()
   const socketIo = useRef<Socket>()
   const roomDetailRef = useRef<RoomDetailFunctionHandler>(null)
   const roomRef = useRef<RoomFunctionHandler>(null)
+  const currentRoomId = useSelector((state: RootState) => state.chat.currentRoomId)
 
-  const [isConnected, setConnected] = useState<boolean>(false)
+  // const [isConnected, setConnected] = useState<boolean>(false)
+  const { isConnected } = useChat()
 
-  window.addEventListener("visibilitychange", () => {
-    document.title = document.visibilityState
-  })
+  // useEffect(() => {
+  //   // Connect to socket
+  //   const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
+  //     query: {
+  //       access_token:
+  //         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFkNTZjNTRhMjBiZWY4MmU0NzlmMGQiLCJ1c2VyX2lkIjoyLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjI5MDEzNTl9.7YgTIRjbTGsmUSEfz3RwHl0UdTgv6f9loNJ4Zmz_3nQ",
+  //     },
+  //   })
 
-  const isWindowFocus = useDetectWindowFocus()
+  //   dispatch(setSocketInstance(socket))
+  //   socketIo.current = socket
 
-  useEffect(() => {
-    // Connect to socket
-    const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
-      query: { access_token: "" },
-    })
-    dispatch(setSocketInstance(socket))
-    socketIo.current = socket
+  //   socket.emit("login")
 
-    socket.on("connect", async () => {
-      if (!socket.id) return
+  //   socket.on("connect", async () => {
+  //     setConnected(true)
 
-      // User listener
-      // Login to socket io to change online status
-      const user = await loginToSocket({ socket_id: socket.id })
-      if (!user?.user_id) return
+  //     socket.on("login", (res: UserRes) => {
+  //       dispatch(setChatProfile(res))
+  //     })
 
-      socket.emit("login", user)
-      dispatch(setChatProfile(user))
-      setConnected(true)
+  //     // Listen to status of friend
+  //     socket.on("friend_login", (user: FriendStatusRes) => {
+  //       roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "login" })
+  //       roomRef.current?.changeStatusOfRoom({ ...user, type: "login" })
+  //     })
 
-      // Listen to status of user who have chat chat
-      socket.on("login", (user: UserData) => {
-        roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "login" })
-        roomRef.current?.changeStatusOfRoom({ ...user, type: "login" })
-      })
-      socket.on("logout", (user: UserData) => {
-        console.log("user logout")
-        dispatch(checkForUserDisconnectWhenTyping(user.user_id))
-        roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
-        roomRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
-      })
+  //     socket.on("friend_logout", (user: FriendStatusRes) => {
+  //       dispatch(checkForUserDisconnectWhenTyping(user.user_id))
+  //       roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
+  //       roomRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
+  //     })
 
-      // Message listener
-      socket.on("receive_message", (data: MessageRes) => {
-        console.log({ isWindowFocus })
+  //     // Message listener
+  //     socket.on("receive_message", (data: MessageRes) => {
+  //       ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
+  //       roomDetailRef.current?.appendMessage(data)
+  //       roomRef.current?.changeOrderAndAppendLastMessage(data)
 
-        ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
-        roomDetailRef.current?.appendMessage(data)
-        roomRef.current?.changeOrderAndAppendLastMessage(data)
-        socket.emit("read_message", data)
-        confirmReadMessage(data.message_id)
-      })
-      socket.on("confirm_read_message", (data: MessageRes) => {
-        roomDetailRef.current?.changeMesageStatus(data)
-        console.log("confirm_read_message", data?.message_text)
-      })
+  //       socket.emit("read_message", data)
+  //     })
 
-      // Listen to message when you are not in that room
-      socket.on("receive_unread_message", (data: MessageRes) => {
-        console.log("receive_unread_message")
-        roomRef.current?.messageUnreadhandler(data)
-      })
+  //     socket.on("confirm_read_message", (data: MessageRes) => {
+  //       roomDetailRef.current?.changeMesageStatus(data)
+  //     })
 
-      socket.on("like_message", (payload: MessageRes) => {
-        roomDetailRef.current?.mutatePartnerReactionMessage(payload)
-      })
-      socket.on("unlike_message", (payload: MessageRes) => {
-        roomDetailRef.current?.mutatePartnerReactionMessage(payload)
-      })
+  //     socket.on("receive_unread_message", (data: MessageRes) => {
+  //       roomRef.current?.messageUnreadhandler(data)
+  //     })
 
-      // Typing listener
-      socket.on("start_typing", (payload: RoomTypingRes) => {
-        dispatch(setCurrentTyping(payload))
-      })
-      socket.on("stop_typing", (payload: RoomTypingRes) => {
-        dispatch(setCurrentTyping(undefined))
-      })
-    })
+  //     socket.on("like_message", (payload: MessageRes) => {
+  //       roomDetailRef.current?.mutatePartnerReactionMessage(payload)
+  //     })
 
-    return () => {
-      // socket.emit("logout", "631ac1558f56544cbc01a26d")
-      socket.off("connect")
-      socket.off("disconnect")
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  //     socket.on("unlike_message", (payload: MessageRes) => {
+  //       roomDetailRef.current?.mutatePartnerReactionMessage(payload)
+  //     })
+
+  //     // Typing listener
+  //     socket.on("start_typing", (payload: RoomTypingRes) => {
+  //       dispatch(setCurrentTyping(payload))
+  //     })
+
+  //     socket.on("stop_typing", (payload: RoomTypingRes) => {
+  //       dispatch(setCurrentTyping(undefined))
+  //     })
+  //   })
+
+  //   return () => {
+  //     // socket.emit("logout", "631ac1558f56544cbc01a26d")
+  //     socket.off("connect")
+  //     socket.off("disconnect")
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [])
 
   const handleSendMessage = (params: MessageRes) => {
     roomRef.current?.changeOrderAndAppendLastMessage(params)
@@ -123,13 +121,18 @@ export const Chat = () => {
 
   if (!isConnected) return <Spinner size={36} />
   return (
-    <section className="grid grid-cols-chat-lg gap-24 overflow-hidden flex-1">
-      <aside className="block-element p-24 pr-12 flex flex-col">
-        <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
-      </aside>
-      <div className="block-element flex flex-col">
-        <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
-      </div>
+    <section className="grid md:grid-cols-chat-md lg:grid-cols-chat-lg gap-12 lg:gap-24 overflow-hidden flex-1">
+      {!currentRoomId || breakpoints > 768 ? (
+        <aside className="block-element py-[18px] px-12 lg:p-24 lg:pr-12 flex flex-col">
+          <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
+        </aside>
+      ) : null}
+
+      {breakpoints > 768 || currentRoomId ? (
+        <div className="block-element flex flex-col overflow-hidden">
+          <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
+        </div>
+      ) : null}
     </section>
   )
 }

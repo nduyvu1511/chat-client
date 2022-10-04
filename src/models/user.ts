@@ -521,3 +521,8 @@ export interface LoginToSocket {
   socket_id: string
   // socket: Socket<any>
 }
+
+export type FriendStatusRes = {
+  user_id: string
+  room_ids: string[]
+}

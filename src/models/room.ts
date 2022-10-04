@@ -1,6 +1,6 @@
 import { AttachmentId, AttachmentRes, ListRes, QueryCommonParams } from "./common"
 import { MessageRes, mutateMessageReaction } from "./message"
-import { IUser, UserData } from "./user"
+import { FriendStatusRes, IUser, UserData } from "./user"
 
 export interface IRoom {
   _id: string
@@ -123,7 +123,7 @@ export interface ClearUnreadMessage {
   room_id: string
 }
 
-export type ChangeStatusOfRoom = UserData & { type: "login" | "logout" }
+export type ChangeStatusOfRoom = FriendStatusRes & { type: "login" | "logout" }
 
 export interface RoomFunctionHandler {
   messageUnreadhandler: (_: MessageRes) => void

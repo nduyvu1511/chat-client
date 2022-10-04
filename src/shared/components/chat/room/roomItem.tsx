@@ -34,7 +34,7 @@ export const RoomItem = ({
   return (
     <div
       onClick={() => onSelectRoom?.(data)}
-      className={`p-16 flex items-center cursor-pointer rounded-[8px] select-none room-item-${
+      className={`p-12 lg:p-16 flex items-center cursor-pointer rounded-[8px] select-none room-item-${
         data.room_id
       } ${isActive ? "bg-blue-10" : "hover:bg-bg"}`}
     >
@@ -50,11 +50,11 @@ export const RoomItem = ({
 
       <div className="flex-1">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary flex-1 line-clamp-1 mr-12 word-break">
+          <p className="text-sm font-semibold leading-[20px] text-primary flex-1 line-clamp-1 mr-12 word-break">
             {data.room_name}
           </p>
           {data?.last_message?.created_at && type === "room" ? (
-            <p className="text-xs text-gray-color-5">
+            <p className="text-[10px] text-xs text-gray-color-5">
               {moment(data?.last_message?.created_at).fromNow()}
             </p>
           ) : null}
@@ -79,7 +79,7 @@ export const RoomItem = ({
                 {data?.last_message?.is_author ? "Bạn: " : data.last_message?.author_name}
               </p>
               <p
-                className={`text-xs line-clamp-1 word-break ${
+                className={`text-xs leading-[18px] line-clamp-1 word-break ${
                   !data?.message_unread_count ? "text-gray-color-7" : "text-blue-50"
                 }`}
               >

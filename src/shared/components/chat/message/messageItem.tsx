@@ -1,6 +1,7 @@
 import { imageBlur } from "@/assets"
 import { Map } from "@/components"
 import { getMessageDescription } from "@/helper"
+import { useLongPress } from "@/hooks"
 import {
   LikeMessage,
   Lnglat,
@@ -22,6 +23,7 @@ import { useDispatch } from "react-redux"
 import { MessageImages } from "./messageImages"
 import { MessageOption } from "./messageOption"
 import { MessageOptionMenu } from "./messageOptionMenu"
+import { MessageOptionModal } from "./messageOptionModal"
 import { MessageReactionCount } from "./messageReactionCount"
 import { MessageStatus } from "./messageStatus"
 
@@ -57,6 +59,7 @@ export const MessageItem = ({
   const dispatch = useDispatch()
   const messageOptionMenuRef = useRef<HTMLDivElement>(null)
   const [setMessageOptionMenu, setShowMessageOptionMenu] = useState<boolean>()
+  const { action, handlers, setAction } = useLongPress()
 
   const generateGoogleMapUrl = ({ lat, lng }: Lnglat) => {
     window.open(`https://www.google.com/maps/place/${lat},${lng}`, "_blank")
@@ -108,6 +111,8 @@ export const MessageItem = ({
         data?.attachments?.length || data?.location || data?.tags?.length ? "mb-24" : "mb-4"
       } ${isLast ? "mb-16" : ""}`}
     >
+      {action === "longpress" ? <MessageOptionModal onClose={() => setAction(undefined)} /> : null}
+
       {setMessageOptionMenu ? (
         <MessageOptionMenu
           onClose={() => setShowMessageOptionMenu(false)}
@@ -142,9 +147,10 @@ export const MessageItem = ({
           </div>
         ) : null}
 
-        <div className={`max-w-[60%] flex-1 relative`}>
+        <div className={`max-w-[80%] lg:max-w-[60%] flex-1 relative`}>
           {!data.attachments?.length ? (
             <div
+              {...(handlers as any)}
               ref={messageOptionMenuRef}
               className={`relative w-fit message-option-absolute message-item-child-${
                 data.message_id
@@ -166,7 +172,7 @@ export const MessageItem = ({
               <div
                 className={`min-w-[56px] rounded-[8px] ${
                   isLast || data?.message_text || data?.reaction_count || data?.location
-                    ? "p-12"
+                    ? "p-16"
                     : ""
                 } ${data?.attachments?.length ? "" : "w-fit"} ${
                   data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"
@@ -178,7 +184,7 @@ export const MessageItem = ({
                     onClick={() =>
                       data.reply_to?.message_id && onClickReplyMsg?.(data.reply_to?.message_id)
                     }
-                    className={`p-12 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
+                    className={`p-16 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
                       data.is_author ? "bg-[#cddef8]" : "bg-gray-05"
                     }`}
                   >
@@ -186,7 +192,7 @@ export const MessageItem = ({
                       <p className="text-sm mb-4 line-clamp-1 word-break text-primary font-semibold">
                         @{data.reply_to.author.author_name}
                       </p>
-                      <p className="text-xs line-clamp-1 word-break">
+                      <p className="text-xs line-clamp-1 word-wrap-anywhere">
                         {data.reply_to.message_text}
                       </p>
                     </div>
@@ -196,7 +202,7 @@ export const MessageItem = ({
                 {/* Message text */}
                 {data?.message_text ? (
                   <Linkify componentDecorator={componentDecorator}>
-                    <p className="message-item-text text-14 leading-20 font-medium text-blue-8">
+                    <p className="message-item-text word-wrap-anywhere text-14 leading-20 font-medium text-blue-8">
                       {data.message_text}
                     </p>
                   </Linkify>
@@ -206,7 +212,7 @@ export const MessageItem = ({
                 {data?.location ? (
                   <div
                     onClick={() => data.location && generateGoogleMapUrl(data.location)}
-                    className="w-[300px] h-[150px] rounded-[8px] overflow-hidden cursor-pointer mb-12"
+                    className="w-[150px] xs:w-[200px] lg:w-[300px] h-[150px] rounded-[8px] overflow-hidden cursor-pointer mb-12"
                   >
                     <Map
                       // markerIcon={data.author?.author_avatar?.thumbnail_url || blankAvatar}
@@ -257,12 +263,12 @@ export const MessageItem = ({
 
               {data?.message_text ? (
                 <div
-                  className={`rounded-[8px] p-12 w-fit min-w-[56px] ${
+                  className={`rounded-[8px] p-16 w-fit min-w-[56px] ${
                     data.is_author ? "text-primary bg-bg-blue ml-auto" : "text-blue-8 bg-bg"
                   }`}
                 >
                   <Linkify componentDecorator={componentDecorator}>
-                    <p className="message-item-text text-14 leading-20 font-medium text-blue-8">
+                    <p className="message-item-text text-14 word-wrap-anywhere leading-20 font-medium text-blue-8">
                       {data.message_text}
                     </p>
                   </Linkify>

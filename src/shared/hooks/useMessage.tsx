@@ -82,6 +82,7 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
         }),
         false
       )
+
       const lastMessageId = messagesData?.data?.[messagesData?.data?.length - 1]?.message_id
 
       if (lastMessageId)

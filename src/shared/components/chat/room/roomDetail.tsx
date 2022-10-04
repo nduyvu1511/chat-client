@@ -153,7 +153,7 @@ export const RoomDetail = forwardRef(function RoomChild(
           )}
 
           <MessageForm
-            className="px-24 border-t border-solid border-border-color"
+            className="px-16 lg:px-24 border-t border-solid border-border-color"
             ref={messageFormRef}
             onSubmit={handleSendMessage}
           />

@@ -75,7 +75,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
   }
 
   const onKeyDownNotEnter = () => {
-    if (isTyping == false) {
+    if (isTyping === false) {
       setTyping(true)
       user &&
         socket?.emit("start_typing", {
@@ -83,6 +83,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
           user_name: user.user_name,
           user_id: user.user_id,
         })
+
       timeout.current = setTimeout(timeoutFunction, 3000)
     } else {
       clearTimeout(timeout.current)
@@ -144,15 +145,11 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
   return (
     <>
-      <div
-        className={`flex flex-col bg-white-color relative ${
-          messageFormData?.attachments?.length ? "h-[78px]" : "h-[78px]"
-        } ${className || ""}`}
-      >
+      <div className={`flex flex-col bg-white-color relative h-[78px] ${className || ""}`}>
         {/* Typing */}
         {currentTyping?.room_id === roomId ? (
           <div className="absolute left-0 top-[-26px] flex-center px-24 py-4 z-[100] bg-white-color">
-            <p className="text-xs line-clamp-1 word-break">
+            <p className="text-xs line-clamp-1 word-wrap-anywhere">
               {currentTyping?.user_name} đang soạn tin nhắn...
             </p>
           </div>
@@ -193,7 +190,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
                       {messageFormData.reply_to.author.author_name}
                     </span>
                   </p>
-                  <p className="text-xs line-clamp-1 word-break">
+                  <p className="text-xs line-clamp-1 word-wrap-anywhere">
                     {messageFormData.reply_to.message_text}
                   </p>
                 </div>

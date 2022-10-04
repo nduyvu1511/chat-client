@@ -29,12 +29,12 @@ export const Message = ({
 
   return (
     <div
-      className="flex-1 mr-12 overflow-y-auto flex flex-col-reverse chat-message-list"
+      className="flex-1 lg:mr-12 overflow-y-auto flex flex-col-reverse chat-message-list"
       id="messageScrollable"
     >
       <InfiniteScroll
         inverse
-        className="p-24 pr-12"
+        className="p-12 lg :p-24 lg :pr-12"
         scrollableTarget="messageScrollable"
         loader={null}
         hasMore={data.has_more}

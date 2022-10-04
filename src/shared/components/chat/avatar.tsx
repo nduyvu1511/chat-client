@@ -66,7 +66,7 @@ export const Avatar = ({
         />
       )}
       {isOnline ? (
-        <span className="absolute right-0 bottom-[4px] w-[8px] h-[8px] bg-[#22DF64] shadow-shadow-1 rounded-[50%] z-10"></span>
+        <span className="absolute right-0 bottom-[4px] w-[8px] h-[8px] shadow-green bg-[#22DF64] shadow-shadow-1 rounded-[50%] z-10"></span>
       ) : null}
     </div>
   )

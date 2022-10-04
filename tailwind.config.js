@@ -14,11 +14,13 @@ module.exports = {
         "wallet-grid": "440px 1fr",
         "booking-grid-sm": "1fr 400px",
         "chat-lg": "400px 1fr",
+        "chat-md": "280px 1fr",
       },
       boxShadow: {
         "shadow-1": "0px 1px 2px rgba(0, 0, 0, 0.05)",
         "shadow-2": "0px 2px 8px rgba(31, 31, 221, 0.2)",
         "shadow-3": "0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        "shadow-status": "0px 0px 3px 1px rgba(31, 235, 63, 0.25)",
       },
     },
     colors: {

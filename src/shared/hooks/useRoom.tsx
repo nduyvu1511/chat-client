@@ -181,9 +181,7 @@ export const useRoom = (roomId?: string): UseRoomRes => {
       mutate(
         produce(data, (draft) => {
           draft.data = draft.data.map((item) => {
-            return params.room_joined_ids.includes(item.room_id)
-              ? { ...item, is_online: true }
-              : item
+            return params.room_ids.includes(item.room_id) ? { ...item, is_online: true } : item
           })
         }),
         false
@@ -192,10 +190,13 @@ export const useRoom = (roomId?: string): UseRoomRes => {
       mutate(
         produce(data, (draft) => {
           draft.data = draft.data.map((item) => {
-            if (!params.room_joined_ids.includes(item.room_id)) {
+            if (!params.room_ids.includes(item.room_id)) {
               return item
             }
-            if (item.room_type === "single" || item.message_unread_count <= 2) {
+            if (
+              item.room_type === "single" ||
+              (item?.top_members || [])?.filter((item) => item?.is_online)?.length <= 2
+            ) {
               return { ...item, is_online: false }
             }
             return item
