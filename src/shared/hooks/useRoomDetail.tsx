@@ -63,6 +63,7 @@ export const useRoomDetail = ({ roomId, callback }: Props): Res => {
       }
     }
   }
+
   return {
     data,
     isFirstLoading: data === undefined && error === undefined,

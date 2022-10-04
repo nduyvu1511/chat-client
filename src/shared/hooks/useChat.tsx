@@ -1,152 +1,203 @@
-// import {
-//   ChangeStatusOfRoom,
-//   FriendStatusRes,
-//   ListRes,
-//   MessageRes,
-//   RoomRes,
-//   RoomTypingRes,
-//   UserRes,
-// } from "@/models"
-// import {
-//   checkForUserDisconnectWhenTyping,
-//   setChatProfile,
-//   setCurrentTyping,
-//   setSocketInstance,
-// } from "@/modules"
-// import { useEffect, useRef, useState } from "react"
-// import { useDispatch } from "react-redux"
-// import { io, Socket } from "socket.io-client"
-// import { useSWRConfig } from "swr"
-// import produce from "immer"
+import { RootState } from "@/core/store"
+import {
+  ChangeStatusOfRoom,
+  FriendStatusRes,
+  ListRes,
+  MessageRes,
+  RoomDetailRes,
+  RoomRes,
+  RoomTypingRes,
+  UserRes,
+} from "@/models"
+import {
+  checkForUserDisconnectWhenTyping,
+  setChatProfile,
+  setCurrentTyping,
+  setSocketInstance,
+} from "@/modules"
+import produce from "immer"
+import { useEffect, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { io, Socket } from "socket.io-client"
+import { useSWRConfig } from "swr"
 
-// interface Res {
-//   isConnected: boolean
-// }
+interface Res {
+  isConnected: boolean
+}
 
-// export const useChat = (): Res => {
-//   const dispatch = useDispatch()
-//   const socketIo = useRef<Socket>()
-//   const { cache, mutate } = useSWRConfig()
+export const useChat = (): Res => {
+  const dispatch = useDispatch()
+  const socketIo = useRef<Socket>()
+  const { cache, mutate } = useSWRConfig()
+  const roomId = useSelector((state: RootState) => state.chat.currentRoomId)
 
-//   const [isConnected, setConnected] = useState<boolean>(false)
+  const [isConnected, setConnected] = useState<boolean>(false)
 
-//   const changeStatusOfRoom = (params: ChangeStatusOfRoom) => {
-//     console.log("Yeah function is called")
-//     const data: ListRes<RoomRes[]> = cache.get("get_room_list")
-//     console.log(data)
-//     if (!data?.data?.length) return
+  const changeStatusOfRoomList = (params: ChangeStatusOfRoom) => {
+    const data: ListRes<RoomRes[]> = cache.get("get_room_list")
+    if (!data?.data?.length) return
 
-//     if (params.type === "login") {
-//       mutate(
-//         "get_room_list",
-//         produce(data, (draft) => {
-//           draft.data = draft.data.map((item) => {
-//             return params.room_ids.includes(item.room_id) ? { ...item, is_online: true } : item
-//           })
-//         }),
-//         false
-//       )
-//     } else {
-//       mutate(
-//         "get_room_list",
-//         produce(data, (draft) => {
-//           draft.data = draft.data.map((item) => {
-//             if (!params.room_ids.includes(item.room_id)) {
-//               return item
-//             }
-//             if (
-//               item.room_type === "single" ||
-//               (item?.top_members || [])?.filter((item) => item?.is_online)?.length <= 2
-//             ) {
-//               return { ...item, is_online: false }
-//             }
-//             return item
-//           })
-//         }),
-//         false
-//       )
-//     }
-//   }
+    if (params.type === "login") {
+      mutate(
+        "get_room_list",
+        produce(data, (draft) => {
+          draft.data = draft.data.map((item) => {
+            return params.room_ids.includes(item.room_id) ? { ...item, is_online: true } : item
+          })
+        }),
+        false
+      )
+    } else {
+      mutate(
+        "get_room_list",
+        produce(data, (draft) => {
+          draft.data = draft.data.map((item) => {
+            if (!params.room_ids.includes(item.room_id)) {
+              return item
+            }
+            if (
+              item.room_type === "single" ||
+              (item?.top_members || [])?.filter((item) => item?.is_online)?.length <= 2
+            ) {
+              return { ...item, is_online: false }
+            }
+            return item
+          })
+        }),
+        false
+      )
+    }
+  }
 
-//   useEffect(() => {
-//     // Connect to socket
-//     const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
-//       query: {
-//         access_token:
-//           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFkNTZjNTRhMjBiZWY4MmU0NzlmMGQiLCJ1c2VyX2lkIjoyLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjI5MDEzNTl9.7YgTIRjbTGsmUSEfz3RwHl0UdTgv6f9loNJ4Zmz_3nQ",
-//       },
-//     })
+  const getRoomList = (): { data: ListRes<RoomRes[]>; key: string } | undefined => {
+    const key = "get_room_list"
+    const data: ListRes<RoomRes[]> = cache.get(key)
+    if (!data?.data?.length) return undefined
 
-//     dispatch(setSocketInstance(socket))
-//     socketIo.current = socket
+    return { data, key }
+  }
+  console.log(cache)
 
-//     socket.emit("login")
+  const getRoomDetail = (id: string): { data: RoomDetailRes; key: string } | undefined => {
+    console.log({ roomId })
+    const key = `get_room_detail_${id}`
+    const data: RoomDetailRes = cache.get(key)
+    if (!data?.room_id) return undefined
 
-//     socket.on("connect", async () => {
-//       setConnected(true)
+    return { data, key }
+  }
+  console.log({ room: roomId })
+  const changeStatusOfRoomDetail = (params: ChangeStatusOfRoom) => {
+    console.log({ roomId })
+    if (!roomId) return
+    const res = getRoomDetail(roomId)
+    if (!res) return
+    const { data, key } = res
 
-//       socket.on("login", (res: UserRes) => {
-//         dispatch(setChatProfile(res))
-//       })
+    console.log(params)
+    if (params.type === "logout") {
+      if (data.members.data?.filter((item) => item.is_online)?.length <= 2) {
+        mutate(
+          key,
+          produce(data, (draft) => {
+            draft.is_online = false
+            draft.offline_at = new Date()
+          }),
+          false
+        )
+      }
+    } else {
+      if (!data?.is_online) {
+        mutate(
+          key,
+          produce(data, (draft) => {
+            draft.is_online = true
+          }),
+          false
+        )
+      }
+    }
+  }
 
-//       // Listen to status of friend
-//       socket.on("friend_login", (user: FriendStatusRes) => {
-//         changeStatusOfRoom({ ...user, type: "login" })
-//         // roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "login" })
-//         // roomRef.current?.changeStatusOfRoom({ ...user, type: "login" })
-//       })
+  useEffect(() => {
+    // Connect to socket
+    const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
+      query: {
+        access_token:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFkNTZjNTRhMjBiZWY4MmU0NzlmMGQiLCJ1c2VyX2lkIjoyLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjI5MDEzNTl9.7YgTIRjbTGsmUSEfz3RwHl0UdTgv6f9loNJ4Zmz_3nQ",
+      },
+    })
 
-//       socket.on("friend_logout", (user: FriendStatusRes) => {
-//         dispatch(checkForUserDisconnectWhenTyping(user.user_id))
-//         changeStatusOfRoom({ ...user, type: "logout" })
-//         // roomDetailRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
-//         // roomRef.current?.changeStatusOfRoom({ ...user, type: "logout" })
-//       })
+    dispatch(setSocketInstance(socket))
+    socketIo.current = socket
 
-//       // Message listener
-//       socket.on("receive_message", (data: MessageRes) => {
-//         ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
-//         // roomDetailRef.current?.appendMessage(data)
-//         // roomRef.current?.changeOrderAndAppendLastMessage(data)
+    socket.emit("login")
 
-//         socket.emit("read_message", data)
-//       })
+    socket.on("connect", async () => {
+      setConnected(true)
 
-//       socket.on("confirm_read_message", (data: MessageRes) => {
-//         // roomDetailRef.current?.changeMesageStatus(data)
-//       })
+      socket.on("login", (res: UserRes) => {
+        dispatch(setChatProfile(res))
+      })
 
-//       socket.on("receive_unread_message", (data: MessageRes) => {
-//         // roomRef.current?.messageUnreadhandler(data)
-//       })
+      // Listen to status of friend
+      socket.on("friend_login", (user: FriendStatusRes) => {
+        const args: ChangeStatusOfRoom = { ...user, type: "login" }
+        changeStatusOfRoomList(args)
+        changeStatusOfRoomDetail(args)
+      })
 
-//       socket.on("like_message", (payload: MessageRes) => {
-//         // roomDetailRef.current?.mutatePartnerReactionMessage(payload)
-//       })
+      socket.on("friend_logout", (user: FriendStatusRes) => {
+        const args: ChangeStatusOfRoom = { ...user, type: "logout" }
+        dispatch(checkForUserDisconnectWhenTyping(user.user_id))
+        changeStatusOfRoomDetail(args)
+        changeStatusOfRoomList(args)
+      })
 
-//       socket.on("unlike_message", (payload: MessageRes) => {
-//         // roomDetailRef.current?.mutatePartnerReactionMessage(payload)
-//       })
+      // Message listener
+      socket.on("receive_message", (data: MessageRes) => {
+        ;(document?.querySelector(".message-form-input") as HTMLInputElement)?.focus()
+        // roomDetailRef.current?.appendMessage(data)
+        // roomRef.current?.changeOrderAndAppendLastMessage(data)
 
-//       // Typing listener
-//       socket.on("start_typing", (payload: RoomTypingRes) => {
-//         dispatch(setCurrentTyping(payload))
-//       })
+        socket.emit("read_message", data)
+      })
 
-//       socket.on("stop_typing", (payload: RoomTypingRes) => {
-//         dispatch(setCurrentTyping(undefined))
-//       })
-//     })
+      socket.on("confirm_read_message", (data: MessageRes) => {
+        // roomDetailRef.current?.changeMesageStatus(data)
+      })
 
-//     return () => {
-//       // socket.emit("logout", "631ac1558f56544cbc01a26d")
-//       socket.off("connect")
-//       socket.off("disconnect")
-//     }
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [])
+      socket.on("receive_unread_message", (data: MessageRes) => {
+        // roomRef.current?.messageUnreadhandler(data)
+      })
 
-//   return {
-//     isConnected,
-//   }
-// }
+      socket.on("like_message", (payload: MessageRes) => {
+        // roomDetailRef.current?.mutatePartnerReactionMessage(payload)
+      })
+
+      socket.on("unlike_message", (payload: MessageRes) => {
+        // roomDetailRef.current?.mutatePartnerReactionMessage(payload)
+      })
+
+      // Typing listener
+      socket.on("start_typing", (payload: RoomTypingRes) => {
+        dispatch(setCurrentTyping(payload))
+      })
+
+      socket.on("stop_typing", (payload: RoomTypingRes) => {
+        dispatch(setCurrentTyping(undefined))
+      })
+    })
+
+    return () => {
+      // socket.emit("logout", "631ac1558f56544cbc01a26d")
+      socket.off("connect")
+      socket.off("disconnect")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return {
+    isConnected,
+  }
+}
