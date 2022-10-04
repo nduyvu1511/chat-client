@@ -147,7 +147,7 @@ export const ModalRoomInfo = ({ data }: ModalRoomInfoProps) => {
                   />
 
                   <div className="flex items-center">
-                    <p className="text-base flex-1 font-semibold line-clamp-1 word-break mr-8">
+                    <p className="text-base flex-1 font-semibold line-clamp-1 word-wrap-anywhere mr-8">
                       {data.room_name}
                     </p>
 

@@ -10,7 +10,7 @@ import {
   SendMessageData,
   UnlikeMessage,
 } from "@/models"
-import { setCurrentRoomInfo } from "@/modules"
+import { setCurrentProfileId, setCurrentRoomInfo } from "@/modules"
 import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Message, MessageForm } from "../message"
@@ -27,6 +27,7 @@ export const RoomDetail = forwardRef(function RoomChild(
   { onSendMessage }: RoomDetailProps,
   ref: OnForwaredRoomDetail
 ) {
+  const user = useSelector((state: RootState) => state.chat.profile)
   const messageFormRef = useRef<OnResetParams>(null)
   const dispatch = useDispatch()
 
@@ -79,22 +80,20 @@ export const RoomDetail = forwardRef(function RoomChild(
       params: { ...val, room_id: roomId },
       onSuccess: (data) => {
         onSendMessage?.(data)
-        if (socket) {
-          socket.emit("send_message", data)
-        }
+        socket?.emit("send_message", data)
       },
     })
   }
 
   const handleReactionMessage = (params: LikeMessage) => {
     likeMessage(params, (data) => {
-      socket && socket.emit("like_message", data)
+      socket?.emit("like_message", data)
     })
   }
 
   const handleUndoMesasgeReaction = (params: UnlikeMessage) => {
     unlikeMessage(params, (data) => {
-      socket && socket.emit("unlike_message", data)
+      socket?.emit("unlike_message", data)
     })
   }
 
@@ -115,21 +114,28 @@ export const RoomDetail = forwardRef(function RoomChild(
             <RoomHeader
               onClick={() => {
                 if (data?.room_id) {
-                  dispatch(
-                    setCurrentRoomInfo({
-                      member_count: data?.member_count,
-                      members: data.members?.data?.map((item) => ({
-                        user_id: item.user_id,
-                        user_avatar: item.avatar.thumbnail_url,
-                        user_name: item.user_name,
-                        is_online: item?.is_online,
-                      })),
-                      room_id: data.room_id,
-                      room_name: data.room_name,
-                      room_type: data.room_type,
-                      room_avatar: data?.room_avatar,
-                    })
-                  )
+                  if (data.room_type === "group") {
+                    dispatch(
+                      setCurrentRoomInfo({
+                        member_count: data?.member_count,
+                        members: data.members?.data?.map((item) => ({
+                          user_id: item.user_id,
+                          user_avatar: item.avatar.thumbnail_url,
+                          user_name: item.user_name,
+                          is_online: item?.is_online,
+                        })),
+                        room_id: data.room_id,
+                        room_name: data.room_name,
+                        room_type: data.room_type,
+                        room_avatar: data?.room_avatar,
+                      })
+                    )
+                  } else {
+                    const partner = data?.members?.data?.find(
+                      (item) => item.user_id !== user?.user_id
+                    )
+                    dispatch(setCurrentProfileId(partner?.user_id))
+                  }
                 }
               }}
               data={data as any}

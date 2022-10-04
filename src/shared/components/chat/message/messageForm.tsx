@@ -22,11 +22,6 @@ import { notify } from "reapop"
 import { v4 as uuidv4 } from "uuid"
 import { ImagePickupPreview } from "./messageImagePicker"
 
-interface MessageFormProps {
-  onSubmit?: (val: SendMessageData) => void
-  className?: string
-}
-
 const Picker = dynamic(
   () => {
     return import("emoji-picker-react")
@@ -34,29 +29,29 @@ const Picker = dynamic(
   { ssr: false }
 )
 
+interface MessageFormProps {
+  onSubmit?: (val: SendMessageData) => void
+  className?: string
+}
+
 export const MessageForm = forwardRef(function MessageFormChild(
   { onSubmit, className }: MessageFormProps,
   ref: OnForwaredResetForm
 ) {
   const dispatch = useDispatch()
   const timeout = useRef<any>()
-  const emojiRef = useRef<HTMLDivElement>(null)
-
   const socket = useSelector((state: RootState) => state.chat.socket)
   const user = useSelector((state: RootState) => state.chat.profile)
   const currentTyping = useSelector((state: RootState) => state.chat.currentTyping)
   const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
-  const messageFormData = useSelector((state: RootState) =>
-    state.chat.messageFormData?.find((item) => item.room_id === roomId)
+  const messageFormIndex = useSelector((state: RootState) => state.chat.currentMessageFormDataIndex)
+  const messageFormData = useSelector(
+    (state: RootState) => state.chat.messageFormData?.[messageFormIndex]
   )
 
-  const [isTyping, setTyping] = useState<boolean>(false)
-  const [showEmoji, setShowEmoji] = useState<boolean>(false)
   const [showMap, setShowMap] = useState<boolean>(false)
-
-  useClickOutside([emojiRef], () => {
-    setShowEmoji(false)
-  })
+  const [isTyping, setTyping] = useState<boolean>(false)
+  const [showQuickMessage, setShowQuickMessage] = useState<boolean>(false)
 
   useImperativeHandle(ref, () => ({
     onReset() {
@@ -72,6 +67,18 @@ export const MessageForm = forwardRef(function MessageFormChild(
         user_name: user.user_name,
         user_id: user.user_id,
       })
+  }
+
+  const emojiRef = useRef<HTMLDivElement>(null)
+
+  const [showEmoji, setShowEmoji] = useState<boolean>(false)
+
+  useClickOutside([emojiRef], () => {
+    setShowEmoji(false)
+  })
+
+  const handleChange = (text: string) => {
+    dispatch(setMessageText(text))
   }
 
   const onKeyDownNotEnter = () => {
@@ -102,11 +109,6 @@ export const MessageForm = forwardRef(function MessageFormChild(
       clearTimeout(timeout.current)
     }
     onSubmit?.(messageFormData)
-  }
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onKeyDownNotEnter()
-    dispatch(setMessageText(e.target.value))
   }
 
   const handleAddFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -143,6 +145,8 @@ export const MessageForm = forwardRef(function MessageFormChild(
     dispatch(setMessageDataInRoom({ ...messageFormData, attachments }))
   }
 
+  console.log("message form re-renders")
+
   return (
     <>
       <div className={`flex flex-col bg-white-color relative h-[78px] ${className || ""}`}>
@@ -154,7 +158,6 @@ export const MessageForm = forwardRef(function MessageFormChild(
             </p>
           </div>
         ) : null}
-
         {messageFormData?.attachments?.length ? (
           <div className="h-[172px] absolute top-[-172px] z-[100] left-0 right-0 bg-white-color px-24">
             <ImagePickupPreview
@@ -167,7 +170,6 @@ export const MessageForm = forwardRef(function MessageFormChild(
             />
           </div>
         ) : null}
-
         {messageFormData?.reply_to ? (
           <div className="px-24 pt-12 absolute top-[-76px] border-t border-border-color border-solid left-0 right-0 bg-white-color z-[200]">
             <div className="p-12 flex-1 rounded-[8px] h-[64px] relative bg-bg pt-12">
@@ -206,29 +208,29 @@ export const MessageForm = forwardRef(function MessageFormChild(
           </div>
         ) : null}
 
-        {showEmoji ? (
-          <div ref={emojiRef} className="absolute top-[-390px] z-[100] left-24 w-[300px]">
-            <Picker
-              categories={[
-                { category: Categories.SUGGESTED, name: "Gợi ý" },
-                { category: Categories.SMILEYS_PEOPLE, name: "Cảm xúc" },
-                { category: Categories.TRAVEL_PLACES, name: "Địa điểm" },
-                { category: Categories.SYMBOLS, name: "Ký tự" },
-                { category: Categories.FOOD_DRINK, name: "Ăn uống" },
-                { category: Categories.OBJECTS, name: "Đối tượng" },
-              ]}
-              onEmojiClick={({ emoji }) => {
-                const text = `${messageFormData?.text || ""} ${emoji} `
-                dispatch(setMessageText(text))
-              }}
-              height={400}
-              width={340}
-            />
-          </div>
-        ) : null}
-
         <div className="flex-1 flex items-center">
           <div className="flex-1 mr- relative mr-16">
+            {showEmoji ? (
+              <div ref={emojiRef} className="absolute top-[-400px] z-[100] left-0 w-[300px]">
+                <Picker
+                  categories={[
+                    { category: Categories.SUGGESTED, name: "Gợi ý" },
+                    { category: Categories.SMILEYS_PEOPLE, name: "Cảm xúc" },
+                    { category: Categories.TRAVEL_PLACES, name: "Địa điểm" },
+                    { category: Categories.SYMBOLS, name: "Ký tự" },
+                    { category: Categories.FOOD_DRINK, name: "Ăn uống" },
+                    { category: Categories.OBJECTS, name: "Đối tượng" },
+                  ]}
+                  onEmojiClick={({ emoji }) => {
+                    const text = `${messageFormData?.text || ""} ${emoji} `
+                    handleChange(text)
+                  }}
+                  height={400}
+                  width={340}
+                  lazyLoadEmojis
+                />
+              </div>
+            ) : null}
             <button
               onClick={() => setShowEmoji(true)}
               className="w-[40px] h-[40px] rounded-[5px] flex-center absolute-vertical left-4"
@@ -239,14 +241,16 @@ export const MessageForm = forwardRef(function MessageFormChild(
             <input
               id="message-form-input"
               onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
-              onChange={handleChange}
-              value={messageFormData?.text || ""}
+              onChange={(e) => {
+                const { value } = e.target
+                handleChange(value)
+              }}
+              value={messageFormData?.text}
               type="text"
               placeholder="Nhập tin nhắn"
               className="form-input border-none bg-gray-05 pl-[48px] h-full w-full text-sm text-gray-color-4 message-form-input"
             />
           </div>
-          {/* <MessageFormInput /> */}
 
           <button
             onClick={() => setShowMap(true)}
@@ -275,9 +279,7 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
             <button
               className={`w-[40px] h-[40px] rounded-[8px] flex-center hover:bg-gray-10 bg-gray-05 duration-150 text-sm font-semibold transition-colors ${
-                !messageFormData?.text &&
-                !messageFormData?.tags?.length &&
-                !messageFormData?.attachments?.length
+                !messageFormData?.text && !messageFormData?.attachments?.length
                   ? "pointer-events-none btn-disabled opacity-30"
                   : "text-primary"
               }`}

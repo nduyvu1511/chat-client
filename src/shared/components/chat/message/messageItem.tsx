@@ -189,7 +189,7 @@ export const MessageItem = ({
                     }`}
                   >
                     <div className="">
-                      <p className="text-sm mb-4 line-clamp-1 word-break text-primary font-semibold">
+                      <p className="text-sm mb-4 line-clamp-1 word-wrap-anywhere text-primary font-semibold">
                         @{data.reply_to.author.author_name}
                       </p>
                       <p className="text-xs line-clamp-1 word-wrap-anywhere">

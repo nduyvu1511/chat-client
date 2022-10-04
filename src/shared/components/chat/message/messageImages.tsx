@@ -20,10 +20,10 @@ export const MessageImages = ({ data, className }: MessageImagesProps) => {
           key={item.attachment_id}
           className={`relative aspect-[4/3] rounded-[5px] overflow-hidden ${
             data.length > 1 ? "border border-solid border-gray-05" : ""
-          } hover:opacity-90 cursor-pointer ${
+          } hover:opacity-90 cursor-pointer mb-2 ${
             data.length - 1 === index
               ? `${index % 2 === 0 ? "w-full" : "w-[50%]"}`
-              : `w-[calc(50%-2px)] ${index > 1 ? "mb-2" : ""} ${index % 2 === 0 ? "mr-2" : ""}`
+              : `w-[calc(50%-2px)]  ${index % 2 === 0 ? "mr-2" : ""}`
           }`}
         >
           <Image blurDataURL={imageBlur} layout="fill" alt="" objectFit="cover" src={item.url} />

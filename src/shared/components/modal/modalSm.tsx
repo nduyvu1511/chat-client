@@ -34,7 +34,7 @@ export const ModalSm = ({
                 <ArrowLeft2Icon className="w-[8px] h-[16px]" />
               </button>
             ) : null}
-            <p className="text-16 font-semibold leading-20 text-center text-blue-8 line-clamp-1 word-break">
+            <p className="text-16 font-semibold leading-20 text-center text-blue-8 line-clamp-1 word-wrap-anywhere">
               {title}
             </p>
           </div>

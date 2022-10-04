@@ -17,6 +17,7 @@ interface ChatSlice {
   currentTyping: RoomTypingRes | undefined
   socket: Socket<any> | undefined
   messageFormData: MessageFormData[]
+  // currentMessageText: string | undefined
   profile: UserRes | undefined
   currentMessageEmotionId: string | undefined
   currentDetailMessageId: string | undefined
@@ -24,6 +25,7 @@ interface ChatSlice {
   currentRoomId: string | undefined
   currentPreviewImages: string[] | undefined
   currentRoomInfo: RoomInfo | undefined
+  currentMessageFormDataIndex: number
 }
 
 const initialState: ChatSlice = {
@@ -37,6 +39,8 @@ const initialState: ChatSlice = {
   currentRoomId: undefined,
   currentPreviewImages: undefined,
   currentRoomInfo: undefined,
+  currentMessageFormDataIndex: -1,
+  // currentMessageText: undefined,
 }
 
 type RoomInfo = RoomInfoRes & {
@@ -91,9 +95,32 @@ const chatSlice = createSlice({
       if (state.currentRoomId) {
         state.socket?.emit("leave_room", state.currentRoomId)
       }
-      state.socket?.emit("join_room", payload)
 
+      state.socket?.emit("join_room", payload)
       state.currentRoomId = payload
+      setTimeout(() => {
+        ;(document.querySelector(".message-form-input") as HTMLInputElement)?.focus()
+      }, 100)
+
+      if (payload) {
+        const index = (state?.messageFormData || [])?.findIndex((item) => item.room_id === payload)
+        if (index === -1) {
+          state.currentMessageFormDataIndex = state?.messageFormData?.length || 0
+
+          // state.currentMessageText = ""
+
+          state.messageFormData.push({
+            room_id: payload,
+            text: "",
+          })
+        } else {
+          state.currentMessageFormDataIndex = index
+          // state.currentMessageText = state.messageFormData[index].text
+        }
+      } else {
+        // state.currentMessageText = undefined
+        state.currentMessageFormDataIndex = -1
+      }
     },
 
     setCurrentProfileId: (state, { payload }: PayloadType<string | undefined>) => {
@@ -109,28 +136,26 @@ const chatSlice = createSlice({
     },
 
     setMessageDataInRoom: (state, { payload }: PayloadType<MessageForm>) => {
-      if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
+      const index = state.currentMessageFormDataIndex
+      if (!index) return
 
-      if (index === -1) {
-        state.messageFormData.push({ ...payload, room_id: state.currentRoomId })
-      } else {
-        state.messageFormData[index] = { ...payload, room_id: state.currentRoomId }
-      }
+      state.messageFormData[index] = { ...state.messageFormData[index], ...payload }
     },
 
     resetMessageDataInRoom: (state) => {
-      if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
-      if (index === -1) return
+      const index = state.currentMessageFormDataIndex
+      if (!index) return
 
-      state.messageFormData[index] = { room_id: state.currentRoomId }
+      state.messageFormData[index] = {
+        room_id: state.messageFormData[index].room_id,
+        text: "",
+      }
+      // state.currentMessageText = ""
     },
 
     addMessageAttachment: (state, { payload }: PayloadType<MessageAttachment[]>) => {
-      if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
-      if (index === -1) return
+      const index = state.currentMessageFormDataIndex
+      if (!index) return
 
       if (!state?.messageFormData[index]?.attachments?.length) {
         state.messageFormData[index].attachments = payload
@@ -143,23 +168,17 @@ const chatSlice = createSlice({
     },
 
     setMessageReply: (state, { payload }: PayloadType<MessageReply | undefined>) => {
-      if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
+      const index = state.currentMessageFormDataIndex
+      if (!index) return
 
-      if (index === -1) {
-        state.messageFormData.push({ reply_to: payload, room_id: state.currentRoomId })
-      } else {
-        state.messageFormData[index].reply_to = payload
-      }
+      state.messageFormData[index].reply_to = payload
     },
 
     setMessageText: (state, { payload }: PayloadType<string>) => {
-      if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
+      // state.currentMessageText = payload
 
-      if (index === -1) {
-        state.messageFormData.push({ room_id: state.currentRoomId, text: payload })
-      } else {
+      const index = state.currentMessageFormDataIndex
+      if (index !== -1) {
         state.messageFormData[index].text = payload
       }
     },
@@ -170,8 +189,8 @@ const chatSlice = createSlice({
 
     deleteMessageAttachment: (state, { payload }: PayloadType<{ imageId: string }>) => {
       if (!state.currentRoomId) return
-      const index = state.messageFormData.findIndex((item) => item.room_id === state.currentRoomId)
-      if (index === -1) return
+      const index = state.currentMessageFormDataIndex
+      if (!index) return
 
       state.messageFormData[index].attachments = (
         state?.messageFormData[index]?.attachments as MessageAttachment[]

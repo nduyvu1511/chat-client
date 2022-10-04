@@ -33,7 +33,7 @@ export const RoomHeader = ({ data, onClick }: RoomHeaderProps) => {
         </div>
 
         <div className="flex-1">
-          <p className="text-sm leading-[20px] font-semibold text-primary line-clamp-1 word-break mb-4">
+          <p className="text-sm leading-[20px] font-semibold text-primary line-clamp-1 word-wrap-anywhere mb-4">
             {data.room_name}
           </p>
           <div className="flex items-center">

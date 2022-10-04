@@ -78,7 +78,7 @@ export const UserProfile = ({ data }: UserProfileProps) => {
             objectFit="cover"
           />
         </div>
-        <p className="text-base font-semibold line-clamp-1 word-break">{data.user_name}</p>
+        <p className="text-base font-semibold line-clamp-1 word-wrap-anywhere">{data.user_name}</p>
         {!data?.is_yourself ? (
           <button
             onClick={handleJoinRoom}

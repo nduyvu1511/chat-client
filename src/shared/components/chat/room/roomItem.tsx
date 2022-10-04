@@ -50,9 +50,10 @@ export const RoomItem = ({
 
       <div className="flex-1">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold leading-[20px] text-primary flex-1 line-clamp-1 mr-12 word-break">
+          <p className="text-sm font-semibold leading-[20px] text-primary flex-1 line-clamp-1 mr-12 word-wrap-anywhere">
             {data.room_name}
           </p>
+
           {data?.last_message?.created_at && type === "room" ? (
             <p className="text-[10px] text-xs text-gray-color-5">
               {moment(data?.last_message?.created_at).fromNow()}
@@ -79,7 +80,7 @@ export const RoomItem = ({
                 {data?.last_message?.is_author ? "Bạn: " : data.last_message?.author_name}
               </p>
               <p
-                className={`text-xs leading-[18px] line-clamp-1 word-break ${
+                className={`text-xs leading-[18px] line-clamp-1 word-wrap-anywhere ${
                   !data?.message_unread_count ? "text-gray-color-7" : "text-blue-50"
                 }`}
               >
