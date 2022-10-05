@@ -44,14 +44,14 @@ export const UsersLikedMessageModal = ({ messageId }: Props) => {
   return (
     <ModalSm
       showLoading={isValidating}
-      className="w-[440px]"
+      className="max-w-[440px]"
       onClose={closeModal}
       title="Chi tiết tin nhắn"
     >
       <>
         {data ? (
           <div className="flex-1 bg-gray-05 border-b border-solid border-border-color">
-            <div className="flex items-center border-b border-solid border-border-color px-16">
+            <div className="flex items-center border-b border-solid border-border-color px-16 w-full overflow-x-auto">
               {Object.entries(data).map(([key]) => (
                 <button
                   key={key}
@@ -61,7 +61,7 @@ export const UsersLikedMessageModal = ({ messageId }: Props) => {
                   }`}
                 >
                   {key === "all" ? (
-                    <p className="text-14 font-semibold">Tất cả</p>
+                    <p className="text-14 font-semibold whitespace-nowrap">Tất cả</p>
                   ) : (
                     <MessageReactionIcon
                       size={22}

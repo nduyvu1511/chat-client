@@ -105,24 +105,41 @@ export const MessageItem = ({
     setShowMessageOptionMenu(true)
   }
 
+  const handleCopyText = () => {
+    data?.message_text && navigator.clipboard.writeText(data.message_text)
+  }
+
+  const handleViewDetail = () => {
+    dispatch(setcurrentDetailMessageId(data.message_id))
+  }
+
   return (
     <div
       className={`message-item relative flex message-item-${data.message_id} ${
         data?.attachments?.length || data?.location || data?.tags?.length ? "mb-24" : "mb-4"
       } ${isLast ? "mb-16" : ""}`}
     >
-      {action === "longpress" ? <MessageOptionModal onClose={() => setAction(undefined)} /> : null}
+      {action === "longpress" ? (
+        <MessageOptionModal
+          onReaction={handleReactOnMessage}
+          onReply={handleSetMessageReply}
+          onCopy={handleCopyText}
+          onUndoReaction={handleUndoReactOnMessage}
+          onViewDetail={handleViewDetail}
+          onClose={() => setAction(undefined)}
+          value={data?.your_reaction}
+        />
+      ) : null}
 
       {setMessageOptionMenu ? (
         <MessageOptionMenu
+          roomType={roomType}
           onClose={() => setShowMessageOptionMenu(false)}
-          onViewDetail={() => dispatch(setcurrentDetailMessageId(data.message_id))}
+          onViewDetail={handleViewDetail}
           className="group-hover:block w-fit"
           messageId={data.message_id}
           showOn={data.is_author ? "right" : "left"}
-          onCopy={() => {
-            data?.message_text && navigator.clipboard.writeText(data.message_text)
-          }}
+          onCopy={handleCopyText}
         />
       ) : null}
 
@@ -130,10 +147,12 @@ export const MessageItem = ({
         {/* Show avatar of sender if type of conversation is group  */}
         {roomType === "group" ? (
           <div
-            onClick={() => dispatch(setCurrentProfileId(data.author.author_id))}
-            className={`relative cursor-pointer w-[40px] h-[40px] rounded-[50%] overflow-hidden ${
-              roomType === "group" ? `${data.is_author ? "ml-12" : "mr-12"}` : "mr-12"
-            }`}
+            onClick={() => shouldBreak && dispatch(setCurrentProfileId(data.author.author_id))}
+            className={`relative w-[28px] h-[28px] md:w-[40px] md:h-[40px] rounded-[50%] overflow-hidden ${
+              roomType === "group"
+                ? `${data.is_author ? "ml-8 md:ml-12 hidden sm:block" : "mr-8 md:mr-12"}`
+                : "mr-8 md:mr-12"
+            } ${shouldBreak ? "cursor-pointer" : ""}`}
           >
             {shouldBreak ? (
               <Image
@@ -147,7 +166,7 @@ export const MessageItem = ({
           </div>
         ) : null}
 
-        <div className={`max-w-[80%] lg:max-w-[60%] flex-1 relative`}>
+        <div className={`max-w-[90%] sm:max-w-[80%] lg:max-w-[55%] xl:max-w-[60%] flex-1 relative`}>
           {!data.attachments?.length ? (
             <div
               {...(handlers as any)}
@@ -162,7 +181,7 @@ export const MessageItem = ({
                   value={data?.your_reaction}
                   onReaction={handleReactOnMessage}
                   onUndoReaction={handleUndoReactOnMessage}
-                  className={`group-hover:block w-fit ${
+                  className={`hidden group-hover:lg:flex w-fit ${
                     !data?.is_author ? "right-[calc(0%-120px)]" : "left-[calc(0%-120px)]"
                   }`}
                   onReply={handleSetMessageReply}
@@ -172,7 +191,7 @@ export const MessageItem = ({
               <div
                 className={`min-w-[56px] rounded-[8px] ${
                   isLast || data?.message_text || data?.reaction_count || data?.location
-                    ? "p-16"
+                    ? "p-12 md:p-16"
                     : ""
                 } ${data?.attachments?.length ? "" : "w-fit"} ${
                   data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"
@@ -184,7 +203,7 @@ export const MessageItem = ({
                     onClick={() =>
                       data.reply_to?.message_id && onClickReplyMsg?.(data.reply_to?.message_id)
                     }
-                    className={`p-16 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
+                    className={`p-12 md:p-16 mb-10 rounded-[8px] min-w-[140px] cursor-pointer flex items-stretch ${
                       data.is_author ? "bg-[#cddef8]" : "bg-gray-05"
                     }`}
                   >
@@ -247,6 +266,7 @@ export const MessageItem = ({
             </div>
           ) : data?.attachments?.length ? (
             <div
+              {...(handlers as any)}
               ref={messageOptionMenuRef}
               className={`relative w-full message-item-child-${data.message_id}`}
             >
@@ -255,7 +275,7 @@ export const MessageItem = ({
                 value={data?.your_reaction}
                 onReaction={handleReactOnMessage}
                 onUndoReaction={handleUndoReactOnMessage}
-                className={`group-hover:block w-fit ${
+                className={`hidden group-hover:lg:flex w-fit ${
                   !data?.is_author ? "right-[calc(0%-120px)]" : "left-[calc(0%-120px)]"
                 }`}
                 onReply={handleSetMessageReply}
@@ -263,7 +283,7 @@ export const MessageItem = ({
 
               {data?.message_text ? (
                 <div
-                  className={`rounded-[8px] p-16 w-fit min-w-[56px] ${
+                  className={`rounded-[8px] p-12 md:p-16 w-fit min-w-[56px] ${
                     data.is_author ? "text-primary bg-bg-blue ml-auto" : "text-blue-8 bg-bg"
                   }`}
                 >
@@ -291,7 +311,7 @@ export const MessageItem = ({
               {isLast || data.status === "rejected" ? (
                 <MessageStatus
                   onResendMessage={handleResendMessage}
-                  className={`mt-12 ${data?.attachments?.length ? "pb-16 mt-24" : ""}`}
+                  className={`mt-12 ${data?.attachments?.length ? `pb-16 mt-12 md:mt-24` : ""}`}
                   createdAt={data.created_at}
                   isRead={data.is_read}
                   showStatus={lastMessage?.message_id === data.message_id && lastMessage?.is_author}

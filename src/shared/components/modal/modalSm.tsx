@@ -25,7 +25,7 @@ export const ModalSm = ({
     <>
       <div
         style={{ zIndex }}
-        className={`flex flex-col w-screen rounded-[8px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white-color max-w-[500px] w-full max-h-[600px] ${className} modal-sm`}
+        className={`flex flex-col rounded-[8px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white-color max-w-[500px] w-full max-h-[600px] ${className} modal-sm`}
       >
         <div className="h-[56px] border-b border-solid border-gray-color-1 w-full flex px-16 md:px-16 items-center">
           <div className="flex-1 flex justify-start">

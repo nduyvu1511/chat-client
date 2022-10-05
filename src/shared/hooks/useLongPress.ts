@@ -11,6 +11,7 @@ export function useLongPress() {
     timerRef.current = setTimeout(() => {
       isLongPress.current = true
       setAction("longpress")
+      navigator.vibrate(200)
     }, 500)
   }
 

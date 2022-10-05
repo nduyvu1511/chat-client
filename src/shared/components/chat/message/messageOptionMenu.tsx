@@ -1,6 +1,7 @@
 import { EyeShowIcon, NoteIcon2 } from "@/assets"
 import { MESSAGE_OPTION_MENU_SIZE } from "@/helper"
 import { useClickOutside } from "@/hooks"
+import { RoomType } from "@/models"
 import { useEffect, useRef } from "react"
 import { IoCopyOutline } from "react-icons/io5"
 
@@ -12,6 +13,7 @@ interface MessageOptionProps {
   onClose?: Function
   showOn?: "left" | "right"
   onCopy?: Function
+  roomType: RoomType
 }
 
 export const MessageOptionMenu = ({
@@ -22,6 +24,7 @@ export const MessageOptionMenu = ({
   onClose,
   showOn,
   onCopy,
+  roomType,
 }: MessageOptionProps) => {
   const menuOptionRef = useRef<HTMLDivElement>(null)
   const container = document.querySelector(".chat-message-list")?.getBoundingClientRect() as DOMRect
@@ -54,8 +57,8 @@ export const MessageOptionMenu = ({
       style={{
         ...MESSAGE_OPTION_MENU_SIZE,
         top,
-        left: showOn === "left" ? child.offsetWidth - 12 : "unset",
-        right: showOn === "right" ? child.offsetWidth + 64 : "unset",
+        left: showOn === "left" ? child.offsetWidth + (roomType === "group" ? -8 : -60) : "unset",
+        right: showOn === "right" ? child.offsetWidth + (roomType === "group" ? 64 : 12) : "unset",
       }}
       className={`rounded-[8px] z-[108] absolute bg-white-color shadow-md border border-solid border-border-color p-8 ${className}`}
     >

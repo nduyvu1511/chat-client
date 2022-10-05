@@ -1254,10 +1254,9 @@ input[type="number"] {
 
   & .chat-message {
     &-list {
-      max-height: calc(100vh - 188px);
-
-      &-resize {
-        max-height: calc(100vh - 380px);
+      max-height: calc(100vh - 154px);
+      @media screen and(min-width: 768px) {
+        max-height: calc(100vh - 170px);
       }
 
       & .infinite-scroll-component__outerdiv {
@@ -1271,7 +1270,8 @@ input[type="number"] {
 
 .modal-profile {
   & .modal-sm {
-    width: 350px;
+    max-width: 350px;
+    width: 100%;
   }
 }
 
@@ -1313,4 +1313,10 @@ input[type="number"] {
 .react-transform-wrapper {
   width: 100% !important;
   height: 100% !important;
+}
+
+.EmojiPickerReact {
+  width: 100% !important;
+  height: 100% !important;
+  border-color: #f0f0f0 !important;
 }

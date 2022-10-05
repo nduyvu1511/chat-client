@@ -127,8 +127,8 @@ const chatApi = {
     return axiosClient.get(`/message/${msgId}`)
   },
 
-  getTagMessageList: ({ limit, offset }: QueryCommonParams) => {
-    return axiosClient.post(`/tag?limit=${limit}&offset=${offset}`)
+  getTagMessageList: ({ limit = 30, offset = 0 }: QueryCommonParams) => {
+    return axiosClient.get(`/tag?limit=${limit}&offset=${offset}`)
   },
 
   changeUserStatus: (params: changeUserStatusParams) => {

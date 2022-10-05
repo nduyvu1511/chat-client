@@ -23,7 +23,7 @@ export const ImagePickupPreview = ({
   onClose,
 }: ImagePickupPreviewProps) => {
   return (
-    <div className={`pt-8 relative ${showLoading ? "pointer-events-none" : ""}`}>
+    <div className={`pt-12 relative ${showLoading ? "pointer-events-none" : ""}`}>
       {showLoading ? (
         <div className="absolute inset-0 flex-center z-[100] ">
           <Spinner size={30} />
@@ -46,7 +46,7 @@ export const ImagePickupPreview = ({
           <div
             key={index}
             style={{ height: size, width: size }}
-            className="rounded-[5px] relative overflow-hidden mr-12 mb-12"
+            className="rounded-[5px] relative overflow-hidden mr-8 mb-8 md:mr-12 md:mb-12"
           >
             <button
               onClick={() => onDelete(item.id)}
@@ -67,7 +67,7 @@ export const ImagePickupPreview = ({
 
         <label
           style={{ height: size, width: size }}
-          className="rounded-[5px] relative overflow-hidden mr-12 mb-12 flex-center border-[2px] border-dashed border-border-color-3 cursor-pointer"
+          className="rounded-[5px] relative overflow-hidden mr-8 mb-8 md:mr-12 md:mb-12 flex-center border-[2px] border-dashed border-border-color-3 cursor-pointer"
           htmlFor="image-add"
         >
           <input

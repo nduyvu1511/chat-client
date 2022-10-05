@@ -52,7 +52,10 @@ export const UserProfile = ({ data }: UserProfileProps) => {
               produce(roomList, (draft) => {
                 draft.total += 1
                 draft.offset += 1
-                draft.data.unshift(data)
+                draft.data.unshift({
+                  ...data,
+                  room_avatar: (data?.room_avatar as any)?.thumbnail_url || data?.room_avatar || "",
+                })
               }),
               false
             )

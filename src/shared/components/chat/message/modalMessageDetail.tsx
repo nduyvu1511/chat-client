@@ -62,7 +62,7 @@ export const ModalMessageDetail = ({ messageId }: Props) => {
           <div className="">
             <p className="text-sm font-semibold mb-12">Đã gửi ({data?.un_read_by?.length})</p>
             {data?.message_id ? (
-              <div className="grid grid-cols-3 gap-12">
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-12">
                 {data.un_read_by.map((user, index) => (
                   <div key={index}>
                     <UserItem

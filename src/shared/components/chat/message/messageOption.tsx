@@ -27,14 +27,14 @@ export const MessageOption = ({
   const emotionRef = useRef<HTMLDivElement>(null)
   const ref = useRef<HTMLDivElement>(null)
 
-  const [showEmotion, setShowEmotion] = useState<true>()
+  const [showEmotion, setShowEmotion] = useState<boolean>()
 
   useClickOutside([emotionRef], () => setShowEmotion(undefined))
 
   return (
     <div ref={ref} className="relative">
       <div
-        className={`absolute top-12 z-[101] px-12 rounded-[8px] h-[30px] hidden group-hover:flex flex-center bg-bg ${className}`}
+        className={`absolute top-12 z-[101] px-12 rounded-[8px] h-[30px] flex-center bg-bg ${className}`}
       >
         <div className="mr-12 relative flex items-center">
           <button className="" onClick={() => setShowEmotion(true)}>
@@ -67,7 +67,7 @@ export const MessageOption = ({
                     />
 
                     {value === val ? (
-                      <span className="absolute bottom-0 h-1 bg-primary w-[24px] rounded-[4px]"></span>
+                      <span className="absolute bottom-[-1px] h-2 bg-primary w-[24px] rounded-[4px]"></span>
                     ) : null}
                   </button>
                 )

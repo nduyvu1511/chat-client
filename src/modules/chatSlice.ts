@@ -137,14 +137,14 @@ const chatSlice = createSlice({
 
     setMessageDataInRoom: (state, { payload }: PayloadType<MessageForm>) => {
       const index = state.currentMessageFormDataIndex
-      if (!index) return
+      if (index === -1) return
 
       state.messageFormData[index] = { ...state.messageFormData[index], ...payload }
     },
 
     resetMessageDataInRoom: (state) => {
       const index = state.currentMessageFormDataIndex
-      if (!index) return
+      if (index === -1) return
 
       state.messageFormData[index] = {
         room_id: state.messageFormData[index].room_id,
@@ -155,7 +155,7 @@ const chatSlice = createSlice({
 
     addMessageAttachment: (state, { payload }: PayloadType<MessageAttachment[]>) => {
       const index = state.currentMessageFormDataIndex
-      if (!index) return
+      if (index === -1) return
 
       if (!state?.messageFormData[index]?.attachments?.length) {
         state.messageFormData[index].attachments = payload
@@ -169,7 +169,7 @@ const chatSlice = createSlice({
 
     setMessageReply: (state, { payload }: PayloadType<MessageReply | undefined>) => {
       const index = state.currentMessageFormDataIndex
-      if (!index) return
+      if (index === -1) return
 
       state.messageFormData[index].reply_to = payload
     },
@@ -190,7 +190,7 @@ const chatSlice = createSlice({
     deleteMessageAttachment: (state, { payload }: PayloadType<{ imageId: string }>) => {
       if (!state.currentRoomId) return
       const index = state.currentMessageFormDataIndex
-      if (!index) return
+      if (index === -1) return
 
       state.messageFormData[index].attachments = (
         state?.messageFormData[index]?.attachments as MessageAttachment[]

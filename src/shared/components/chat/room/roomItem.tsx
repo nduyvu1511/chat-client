@@ -1,7 +1,9 @@
 import { CheckIcon2, CloseThickIcon } from "@/assets"
 import { Badge } from "@/components"
+import { toFirstUpperCase } from "@/helper"
 import { RoomRes } from "@/models"
 import moment from "moment"
+import "moment/locale/vi"
 import { Avatar } from "../avatar"
 
 interface RoomItemProps {
@@ -42,7 +44,7 @@ export const RoomItem = ({
         <Avatar
           isGroup={data.room_type === "group"}
           avatarGroup={data.top_members?.map((item) => item.user_avatar)}
-          avatar={data?.room_avatar || ""}
+          avatar={data?.room_avatar || (data as any)?.room_avatar?.thumbnail_url || ""}
           isOnline={data.is_online}
           memberCount={data.member_count}
         />
@@ -56,7 +58,7 @@ export const RoomItem = ({
 
           {data?.last_message?.created_at && type === "room" ? (
             <p className="text-[10px] text-xs text-gray-color-5">
-              {moment(data?.last_message?.created_at).fromNow()}
+              {toFirstUpperCase(moment(data?.last_message?.created_at).fromNow())}
             </p>
           ) : null}
 

@@ -64,10 +64,12 @@ export const Message = ({
               return (
                 <>
                   {shouldShowDate ? (
-                    <div className="flex-center text-xs my-24">
-                      <span className="mx-8">
+                    <div className="flex-center my-24 mx-24">
+                      <span className="flex-1 border-b border-border-color border-solid"></span>
+                      <span className="text-[10px] font-medium text-gray-color-3 leading-[16px] md:text-12 bg-bg rounded-[8px] py-2 px-8 mx-4">
                         {moment(item.created_at).format("HH:mm DD/MM/YYYY")}
                       </span>
+                      <span className="flex-1 border-b border-border-color border-solid"></span>
                     </div>
                   ) : null}
 

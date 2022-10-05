@@ -52,7 +52,7 @@ export const RoomSearch = ({
 
         <button
           onClick={() => onClose?.()}
-          className="lg:px-8 lg:py-4 hover:bg-bg text-xs lg:text-sm font-semibold rounded-[5px] ml-12"
+          className="px-4 py-2 lg:px-8 lg:py-4 hover:bg-bg text-xs lg:text-sm font-semibold rounded-[5px] ml-12"
         >
           Đóng
         </button>
@@ -101,7 +101,7 @@ export const RoomSearch = ({
                   </InfiniteScroll>
                 </div>
               ) : (
-                <div className="flex-center flex-col mt-40 text-sm font-semibold">
+                <div className="flex-center flex-col mt-40 text-sm font-semibold text-gray-color-4">
                   <p className="mb-4">Không có kết quả</p>
                   <p className="">Vui lòng thử lại từ khóa khác</p>
                 </div>

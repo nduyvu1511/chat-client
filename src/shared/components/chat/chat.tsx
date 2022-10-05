@@ -119,13 +119,13 @@ export const Chat = () => {
   if (!isConnected) return <Spinner size={36} />
   return (
     <section className="grid md:grid-cols-chat-md lg:grid-cols-chat-lg gap-12 lg:gap-24 overflow-hidden flex-1">
-      {!currentRoomId || breakpoints > 768 ? (
+      {!currentRoomId || breakpoints >= 768 ? (
         <aside className="block-element py-[18px] px-12 lg:p-24 lg:pr-12 flex flex-col">
           <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
         </aside>
       ) : null}
 
-      {breakpoints > 768 || currentRoomId ? (
+      {breakpoints >= 768 || currentRoomId ? (
         <div className="block-element flex flex-col overflow-hidden">
           <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
         </div>
