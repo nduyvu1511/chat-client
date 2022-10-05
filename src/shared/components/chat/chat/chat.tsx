@@ -1,6 +1,6 @@
 import { Spinner } from "@/components"
 import { RootState } from "@/core/store"
-import { useBreakpoint, useDetectWindowFocus } from "@/hooks"
+import { getMessageDescription } from "@/helper"
 import {
   FriendStatusRes,
   MessageRes,
@@ -20,18 +20,27 @@ import {
 import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import io, { Socket } from "socket.io-client"
-import { Room, RoomDetail } from "./room"
+import { Room, RoomDetail } from "../room"
 
 export const Chat = () => {
-  const breakpoints = useBreakpoint()
   const dispatch = useDispatch()
-  const isWindowFocus = useDetectWindowFocus()
   const socketIo = useRef<Socket>()
   const roomDetailRef = useRef<RoomDetailFunctionHandler>(null)
   const roomRef = useRef<RoomFunctionHandler>(null)
   const currentRoomId = useSelector((state: RootState) => state.chat.currentRoomId)
-
   const [isConnected, setConnected] = useState<boolean>(false)
+
+  const createNotification = (data: MessageRes) => {
+    Notification.requestPermission().then((per) => {
+      if (per === "granted") {
+        new Notification("Tin nhắn mới", {
+          badge: data.author?.author_avatar?.thumbnail_url,
+          icon: data.author?.author_avatar?.thumbnail_url,
+          body: getMessageDescription(data),
+        })
+      }
+    })
+  }
 
   useEffect(() => {
     // Connect to socket
@@ -71,7 +80,29 @@ export const Chat = () => {
         roomDetailRef.current?.appendMessage(data)
         roomRef.current?.changeOrderAndAppendLastMessage(data)
 
-        socket.emit("read_message", data)
+        if (document.hasFocus()) {
+          socket.emit("read_message", data)
+        } else {
+          createNotification(data)
+
+          // self.addEventListener('notificationclick', (event) => {
+          //   console.log(`On notification click: ${event.n.tag}`);
+          //   event.notification.close();
+
+          //   // This looks to see if the current is already open and
+          //   // focuses if it is
+          //   event.waitUntil(clients.matchAll({
+          //     type: "window"
+          //   }).then((clientList) => {
+          //     for (const client of clientList) {
+          //       if (client.url === '/' && 'focus' in client)
+          //         return client.focus();
+          //     }
+          //     if (clients.openWindow)
+          //       return clients.openWindow('/');
+          //   }));
+          // });
+        }
       })
 
       socket.on("confirm_read_message", (data: MessageRes) => {
@@ -79,6 +110,7 @@ export const Chat = () => {
       })
 
       socket.on("receive_unread_message", (data: MessageRes) => {
+        createNotification(data)
         roomRef.current?.messageUnreadhandler(data)
       })
 
@@ -117,19 +149,20 @@ export const Chat = () => {
   }
 
   if (!isConnected) return <Spinner size={36} />
+
   return (
     <section className="grid md:grid-cols-chat-md lg:grid-cols-chat-lg gap-12 lg:gap-24 overflow-hidden flex-1">
-      {!currentRoomId || breakpoints >= 768 ? (
-        <aside className="block-element py-[18px] px-12 lg:p-24 lg:pr-12 flex flex-col">
-          <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
-        </aside>
-      ) : null}
+      <aside
+        className={`block-element py-[18px] px-12 lg:p-24 lg:pr-12 flex-col ${
+          currentRoomId ? "hidden md:flex" : "flex"
+        }`}
+      >
+        <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
+      </aside>
 
-      {breakpoints >= 768 || currentRoomId ? (
-        <div className="block-element flex flex-col overflow-hidden">
-          <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
-        </div>
-      ) : null}
+      <div className={`block-element flex-col ${!currentRoomId ? "hidden md:flex" : "flex"}`}>
+        <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
+      </div>
     </section>
   )
 }

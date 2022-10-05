@@ -4,7 +4,7 @@ import { toFirstUpperCase } from "@/helper"
 import { RoomRes } from "@/models"
 import moment from "moment"
 import "moment/locale/vi"
-import { Avatar } from "../avatar"
+import { Avatar } from "../common/avatar"
 
 interface RoomItemProps {
   data: RoomRes | null

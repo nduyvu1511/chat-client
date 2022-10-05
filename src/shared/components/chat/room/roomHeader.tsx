@@ -5,7 +5,7 @@ import { setCurrentRoomId } from "@/modules"
 import moment from "moment"
 import { MdOutlineArrowBackIosNew } from "react-icons/md"
 import { useDispatch } from "react-redux"
-import { Avatar } from "../avatar"
+import { Avatar } from "../common/avatar"
 
 interface RoomHeaderProps {
   data: RoomDetailRes

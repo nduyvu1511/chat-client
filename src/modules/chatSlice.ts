@@ -91,6 +91,9 @@ const chatSlice = createSlice({
 
     setCurrentRoomId: (state, { payload }: PayloadType<string | undefined>) => {
       if (payload === state.currentRoomId) return
+      if (state.currentTyping?.room_id === payload) {
+        state.currentTyping = undefined
+      }
 
       if (state.currentRoomId) {
         state.socket?.emit("leave_room", state.currentRoomId)
@@ -98,16 +101,12 @@ const chatSlice = createSlice({
 
       state.socket?.emit("join_room", payload)
       state.currentRoomId = payload
-      setTimeout(() => {
-        ;(document.querySelector(".message-form-input") as HTMLInputElement)?.focus()
-      }, 100)
 
       if (payload) {
         const index = (state?.messageFormData || [])?.findIndex((item) => item.room_id === payload)
+
         if (index === -1) {
           state.currentMessageFormDataIndex = state?.messageFormData?.length || 0
-
-          // state.currentMessageText = ""
 
           state.messageFormData.push({
             room_id: payload,
@@ -115,13 +114,15 @@ const chatSlice = createSlice({
           })
         } else {
           state.currentMessageFormDataIndex = index
-          // state.currentMessageText = state.messageFormData[index].text
         }
       } else {
-        // state.currentMessageText = undefined
         state.currentMessageFormDataIndex = -1
       }
     },
+
+    // setTimeout(() => {
+    //   ;(document.querySelector(".message-form-input") as HTMLInputElement)?.focus()
+    // }, 100)
 
     setCurrentProfileId: (state, { payload }: PayloadType<string | undefined>) => {
       state.currentProfileId = payload

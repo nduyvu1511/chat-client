@@ -38,6 +38,7 @@ interface UseMessageRes {
   mutateByMessageRes: (message: MessageRes) => void
   mutatePartnerReactionMessage: (message: MessageRes) => void
   resendMessage: (message: MessageRes) => void
+  confirmReadAllMessage: () => void
 }
 
 interface UseMessageProps {
@@ -265,12 +266,26 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     if (!data?.data?.length) return
 
     const index = findMessageIndex(params.message_id)
-    if (index === -1) return
-    if (data.data[index].is_read) return
+    if (index === -1 || data.data[index].is_read) return
 
     mutate(
       produce(data, (draft) => {
         draft.data[index].is_read = true
+      }),
+      false
+    )
+  }
+
+  const confirmReadAllMessage = async () => {
+    if (!data?.data?.length) return
+
+    mutate(
+      produce(data, (draft) => {
+        draft.data.forEach((item) => {
+          if (!item.is_read) {
+            item.is_read = true
+          }
+        })
       }),
       false
     )
@@ -415,5 +430,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
     mutateByMessageRes,
     mutatePartnerReactionMessage,
     resendMessage,
+    confirmReadAllMessage,
   }
 }

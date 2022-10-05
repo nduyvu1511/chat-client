@@ -13,7 +13,7 @@ interface Res {
 
 interface Props {
   roomId: string
-  callback?: (_: MessageRes) => void
+  callback?: (_: { lastMessage: MessageRes; messages: MessageRes[] }) => void
 }
 
 export const useRoomDetail = ({ roomId, callback }: Props): Res => {
@@ -31,9 +31,10 @@ export const useRoomDetail = ({ roomId, callback }: Props): Res => {
             mutate(`get_messages_in_room_${roomId}`, data.messages, false)
 
             const lastMessage = data.messages?.data?.[(data.messages?.data?.length || 0) - 1]
-            if (lastMessage && !lastMessage.is_author && !lastMessage.is_read) {
-              callback?.(lastMessage)
+            if (lastMessage?.message_id && !lastMessage.is_author && !lastMessage.is_read) {
+              callback?.({ lastMessage, messages: data?.messages?.data || [] })
             }
+
             return data
           })
       : null

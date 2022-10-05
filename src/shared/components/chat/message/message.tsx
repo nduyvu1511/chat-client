@@ -48,7 +48,6 @@ export const Message = ({
         {data?.data?.length
           ? data.data.map((item, index) => {
               const messages = data?.data || []
-
               const prevMsg = messages[index - 1]
               const nextMsg = messages[index + 1]
 
@@ -62,7 +61,7 @@ export const Message = ({
                 !moment(item?.created_at).isSame(moment(nextMsg?.created_at), "date")
 
               return (
-                <>
+                <div key={item.message_id}>
                   {shouldShowDate ? (
                     <div className="flex-center my-24 mx-24">
                       <span className="flex-1 border-b border-border-color border-solid"></span>
@@ -74,7 +73,6 @@ export const Message = ({
                   ) : null}
 
                   <MessageItem
-                    key={item.message_id}
                     roomType={roomType}
                     onResendMessage={onResendMessage}
                     onClickReplyMsg={handleRedirectToReplyMessage}
@@ -85,7 +83,7 @@ export const Message = ({
                     lastMessage={data.data?.[data?.data?.length - 1]}
                     data={item}
                   />
-                </>
+                </div>
               )
             })
           : null}

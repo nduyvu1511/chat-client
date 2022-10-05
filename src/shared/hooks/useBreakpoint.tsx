@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react"
+import _ from "lodash"
 
-export const useBreakpoint = () => {
-  const [breakpoint, setBreakpoint] = useState(window?.innerWidth || 1200)
-  const resize = () => {
-    setBreakpoint(window.innerWidth)
-  }
+const useBreakpoint = () => {
+  const [brkPnt, setBrkPnt] = useState(window.innerWidth)
 
   useEffect(() => {
-    window.addEventListener("resize", resize)
-
-    return () => {
-      window.removeEventListener("resize", resize)
-    }
+    const calcInnerWidth = _.throttle(function () {
+      setBrkPnt(window.innerWidth)
+    }, 200)
+    window.addEventListener("resize", calcInnerWidth)
+    return () => window.removeEventListener("resize", calcInnerWidth)
   }, [])
 
-  return breakpoint
+  return brkPnt
 }
+
+export { useBreakpoint }

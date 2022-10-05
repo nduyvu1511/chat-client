@@ -1,6 +1,6 @@
 import { Spinner } from "@/components"
 import { RootState } from "@/core/store"
-import { useMessage, useRoomDetail } from "@/hooks"
+import { useDetectWindowFocus, useMessage, useRoomDetail } from "@/hooks"
 import {
   LikeMessage,
   MessageRes,
@@ -11,7 +11,8 @@ import {
   UnlikeMessage,
 } from "@/models"
 import { setCurrentProfileId, setCurrentRoomInfo } from "@/modules"
-import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from "react"
+import { chatApi } from "@/services"
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Message, MessageForm } from "../message"
 import { RoomDetailModals } from "./roomDetailModals"
@@ -30,6 +31,7 @@ export const RoomDetail = forwardRef(function RoomChild(
   const user = useSelector((state: RootState) => state.chat.profile)
   const messageFormRef = useRef<OnResetParams>(null)
   const dispatch = useDispatch()
+  const isWindowFocus = useDetectWindowFocus()
 
   const socket = useSelector((state: RootState) => state.chat.socket)
   const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
@@ -37,7 +39,10 @@ export const RoomDetail = forwardRef(function RoomChild(
   const { changeStatusOfRoom, data, isFirstLoading } = useRoomDetail({
     roomId,
     callback: (res) => {
-      socket?.emit("read_message", res)
+      console.log("lastMessage from here: ", res)
+      handleReadMessage(res)
+      // socket?.emit("read_message", res)
+      // confirmReadAllMessage()
     },
   })
   const {
@@ -52,6 +57,7 @@ export const RoomDetail = forwardRef(function RoomChild(
     isFetchingMore,
     mutatePartnerReactionMessage,
     resendMessage,
+    confirmReadAllMessage,
   } = useMessage({ roomId, initialData: data?.messages })
 
   useImperativeHandle(ref, () => ({
@@ -96,6 +102,62 @@ export const RoomDetail = forwardRef(function RoomChild(
       socket?.emit("unlike_message", data)
     })
   }
+
+  // const clearMessageUnreadCountInRoomList = () => {
+  //   const roomList: ListRes<RoomRes[]> = cache.get("get_room_list")
+  //   if (roomList?.data?.length) {
+  //     const index = roomList.data.findIndex((item) => item.room_id === roomId)
+  //     if (index === -1) {
+  //       mutate("get_room_list")
+  //     } else {
+  //       mutate(
+  //         "get_room_list",
+  //         produce(roomList, (draft) => {
+  //           draft.data[index].message_unread_count = 0
+  //         }),
+  //         false
+  //       )
+  //     }
+  //   }
+  // }
+
+  const handleReadMessage = ({
+    lastMessage,
+    messages,
+  }: {
+    lastMessage: MessageRes
+    messages: MessageRes[]
+  }) => {
+    if (!lastMessage || lastMessage.is_author || lastMessage?.is_read) return
+
+    socket?.emit("read_message", lastMessage)
+    confirmReadMessage(lastMessage)
+
+    // Get list message unread except the last message has sent request
+    const listMessageUnread = messages
+      .filter((item) => !item.is_read)
+      .filter((item) => item.message_id !== lastMessage.message_id)
+
+    if (listMessageUnread?.length) {
+      confirmReadAllMessage()
+      chatApi.confirmReadAllMessageInRoom(roomId)
+    }
+  }
+
+  useEffect(() => {
+    if (!roomId || !isWindowFocus || !messages?.data?.length) return
+    const lastMessage = messages?.data?.[messages?.data?.length - 1]
+
+    console.log({ lastMessageFromUseEffect: lastMessage })
+
+    if (lastMessage?.message_id && !lastMessage?.is_author && !lastMessage?.is_read) {
+      handleReadMessage({
+        lastMessage,
+        messages: messages.data,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWindowFocus])
 
   if (!roomId)
     return (

@@ -118,21 +118,17 @@ export const useRoom = (roomId?: string): UseRoomRes => {
     if (index === -1) return
 
     const room = { ...data.data[index] }
-    // for sure cause I.D.K what server sent
     if (!room.message_unread_count || room.message_unread_count <= 0) return
 
-    try {
-      const res: any = await chatApi.clearMessageUnreadFromRoom(roomId)
-      await chatApi.confirmReadAllMessageInRoom(roomId)
-      if (res?.success) {
-        mutate(
-          produce(data, (draft) => {
-            draft.data[index].message_unread_count = 0
-          }),
-          false
-        )
-      }
-    } catch (error) {}
+    const res = await chatApi.clearMessageUnreadFromRoom(roomId)
+    if (res?.success) {
+      mutate(
+        produce(data, (draft) => {
+          draft.data[index].message_unread_count = 0
+        }),
+        false
+      )
+    }
   }
 
   const appendLastMessage = (params: MessageRes) => {

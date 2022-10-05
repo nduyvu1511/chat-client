@@ -1,3 +1,4 @@
 export * from "./chat"
 export * from "./user"
-export * from "./avatar"
+export * from "./common"
+export * from "./message"

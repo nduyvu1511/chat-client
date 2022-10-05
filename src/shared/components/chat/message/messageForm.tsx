@@ -45,15 +45,17 @@ export const MessageForm = forwardRef(function MessageFormChild(
   const user = useSelector((state: RootState) => state.chat.profile)
   const currentTyping = useSelector((state: RootState) => state.chat.currentTyping)
   const roomId = useSelector((state: RootState) => state.chat.currentRoomId) as string
+
   const messageFormIndex = useSelector((state: RootState) => state.chat.currentMessageFormDataIndex)
-  const [focus, setFocus] = useState<boolean>(false)
   const messageFormData = useSelector(
     (state: RootState) => state.chat.messageFormData?.[messageFormIndex]
   )
+
   const breakpoints = useBreakpoint()
 
   const [isTyping, setTyping] = useState<boolean>(false)
   const [showEmoji, setShowEmoji] = useState<boolean>(false)
+  const [focus, setFocus] = useState<boolean>(false)
 
   useImperativeHandle(ref, () => ({
     onReset() {
@@ -250,24 +252,36 @@ export const MessageForm = forwardRef(function MessageFormChild(
 
         <div className="flex-1 h-full relative flex-center">
           <textarea
+            // value={messageFormData?.text}
             style={{
               height: 26,
               maxHeight: 52,
             }}
-            onFocus={() => {
-              breakpoints < 768 && setFocus(true)
+            onBlur={(e) => {
+              dispatch(setMessageText(e.target.value))
+              if (focus) {
+                setFocus(false)
+              }
             }}
-            onBlur={() => {
-              breakpoints < 768 && setFocus(false)
+            onFocus={() => {
+              if (!focus) {
+                setFocus(true)
+              }
             }}
             id="message-form-input"
-            onKeyPress={(e) => e.code === "Enter" && handleSubmit()}
+            onKeyPress={(e) => {
+              if (e.code === "Enter") {
+                handleSubmit()
+                dispatch(setMessageText(""))
+              }
+            }}
             onChange={(e) => {
               const { value } = e.target
-              handleChange(value)
+              // handleChange(value)
+              onKeyDownNotEnter()
               textAreaGrowthUp()
             }}
-            value={messageFormData?.text}
+            defaultValue={messageFormData.text}
             placeholder="Nhập tin nhắn"
             className="form-input border-none scrollbar-hide bg-gray-05 pl-0 py-0 h-full w-full text-sm text-gray-color-4 message-form-input pr-0 px-12 leading-[20px] resize-none"
           />
