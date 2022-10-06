@@ -1,5 +1,5 @@
 import { CreateUserRes, LoginParams, UseParams } from "@/models"
-import { setProfile } from "@/modules"
+import { setAccessToken, setProfile } from "@/modules"
 import { chatApi } from "@/services"
 import { useRouter } from "next/router"
 import { useDispatch } from "react-redux"
@@ -22,6 +22,8 @@ export const useAuth = (): UseAuthRes => {
         const { access_token, refresh_token, ...rest } = data
         onSuccess?.(data)
         dispatch(setProfile(rest))
+        dispatch(setAccessToken(access_token))
+
         setTimeout(() => {
           router.push("/")
         }, 0)

@@ -362,8 +362,6 @@ export const getMessageDescription = (params: MessageRes): string => {
   let message_text = params?.message_text || ""
   if (params.attachments?.length) {
     message_text = "Hình ảnh"
-  } else if (params?.tags?.length) {
-    message_text = "Tin nhắn nhanh"
   } else if (params?.location) {
     message_text = "Vị trí"
   }

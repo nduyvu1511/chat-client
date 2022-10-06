@@ -5,7 +5,6 @@ import {
   CreateSingleChat,
   LikeMessage,
   LoginFormParams,
-  LoginToSocket,
   QueryCommonParams,
   SendMessage,
   UpdateRoomInfo,
@@ -20,9 +19,6 @@ const axiosClient = axios.create({
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
-    // Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFhYjMxZGI2MDViYjI5MDZkOWFjZWIiLCJ1c2VyX2lkIjo1LCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjMxMjQxODB9.62mN-CWn5EKsf3TuTJJBGAP866fmj8S0HcOqQnGTVnw`,
-    // Blank user
-    Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFkNTZjNTRhMjBiZWY4MmU0NzlmMGQiLCJ1c2VyX2lkIjoyLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjI5MDEzNTl9.7YgTIRjbTGsmUSEfz3RwHl0UdTgv6f9loNJ4Zmz_3nQ`,
   },
 })
 
@@ -40,13 +36,17 @@ const memoizedRefreshToken = mem(
   }
 )
 
+axiosClient.interceptors.request.use(async (config) => {
+  const accessToken = store.getState().chat.accessToken
+  ;(config as any).headers.authorization = `Bearer ${accessToken}`
+  return config
+})
+
 try {
   axiosClient.interceptors.response.use(
     async (response) => {
       if (response?.data?.status_code === 401 || response?.data?.status_code === 403) {
         const res = await memoizedRefreshToken()
-
-        console.log(res.success)
 
         if (res?.success) {
           return response.data

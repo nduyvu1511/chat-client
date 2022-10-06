@@ -17,7 +17,6 @@ interface ChatSlice {
   currentTyping: RoomTypingRes | undefined
   socket: Socket<any> | undefined
   messageFormData: MessageFormData[]
-  // currentMessageText: string | undefined
   profile: UserRes | undefined
   currentMessageEmotionId: string | undefined
   currentDetailMessageId: string | undefined
@@ -26,6 +25,7 @@ interface ChatSlice {
   currentPreviewImages: string[] | undefined
   currentRoomInfo: RoomInfo | undefined
   currentMessageFormDataIndex: number
+  accessToken: string | undefined
 }
 
 const initialState: ChatSlice = {
@@ -40,7 +40,7 @@ const initialState: ChatSlice = {
   currentPreviewImages: undefined,
   currentRoomInfo: undefined,
   currentMessageFormDataIndex: -1,
-  // currentMessageText: undefined,
+  accessToken: undefined,
 }
 
 type RoomInfo = RoomInfoRes & {
@@ -59,6 +59,10 @@ const chatSlice = createSlice({
       if (state.currentTyping?.user_id === payload) {
         state.currentTyping = undefined
       }
+    },
+
+    setAccessToken: (state, { payload }: PayloadType<string | undefined>) => {
+      state.accessToken = payload
     },
 
     setCurrentRoomInfo: (state, { payload }: PayloadType<RoomInfo | undefined>) => {
@@ -120,10 +124,6 @@ const chatSlice = createSlice({
       }
     },
 
-    // setTimeout(() => {
-    //   ;(document.querySelector(".message-form-input") as HTMLInputElement)?.focus()
-    // }, 100)
-
     setCurrentProfileId: (state, { payload }: PayloadType<string | undefined>) => {
       state.currentProfileId = payload
     },
@@ -151,7 +151,6 @@ const chatSlice = createSlice({
         room_id: state.messageFormData[index].room_id,
         text: "",
       }
-      // state.currentMessageText = ""
     },
 
     addMessageAttachment: (state, { payload }: PayloadType<MessageAttachment[]>) => {
@@ -176,8 +175,6 @@ const chatSlice = createSlice({
     },
 
     setMessageText: (state, { payload }: PayloadType<string>) => {
-      // state.currentMessageText = payload
-
       const index = state.currentMessageFormDataIndex
       if (index !== -1) {
         state.messageFormData[index].text = payload
@@ -219,4 +216,5 @@ export const {
   setCurrentPreviewImages,
   setCurrentRoomInfo,
   updateCurrentRoomInfo,
+  setAccessToken
 } = chatSlice.actions

@@ -4,7 +4,6 @@ import { useDetectWindowFocus, useMessage, useRoomDetail } from "@/hooks"
 import {
   LikeMessage,
   MessageRes,
-  OnResetParams,
   RoomDetailFunctionHandler,
   RoomType,
   SendMessageData,
@@ -12,7 +11,7 @@ import {
 } from "@/models"
 import { setCurrentProfileId, setCurrentRoomInfo } from "@/modules"
 import { chatApi } from "@/services"
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from "react"
+import { ForwardedRef, forwardRef, useCallback, useEffect, useImperativeHandle } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Message, MessageForm } from "../message"
 import { RoomDetailModals } from "./roomDetailModals"
@@ -29,7 +28,7 @@ export const RoomDetail = forwardRef(function RoomChild(
   ref: OnForwaredRoomDetail
 ) {
   const user = useSelector((state: RootState) => state.chat.profile)
-  const messageFormRef = useRef<OnResetParams>(null)
+  // const messageFormRef = useRef<OnResetParams>(null)
   const dispatch = useDispatch()
   const isWindowFocus = useDetectWindowFocus()
 
@@ -78,17 +77,16 @@ export const RoomDetail = forwardRef(function RoomChild(
     },
   }))
 
-  const handleSendMessage = (val: SendMessageData) => {
-    if (!roomId) return
-    messageFormRef?.current?.onReset()
-
+  const handleSendMessage = (params: SendMessageData) => {
+    console.log(params)
     sendMessage({
-      params: { ...val, room_id: roomId },
+      params,
       onSuccess: (data) => {
         onSendMessage?.(data)
         socket?.emit("send_message", data)
       },
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }
 
   const handleReactionMessage = (params: LikeMessage) => {
@@ -102,24 +100,6 @@ export const RoomDetail = forwardRef(function RoomChild(
       socket?.emit("unlike_message", data)
     })
   }
-
-  // const clearMessageUnreadCountInRoomList = () => {
-  //   const roomList: ListRes<RoomRes[]> = cache.get("get_room_list")
-  //   if (roomList?.data?.length) {
-  //     const index = roomList.data.findIndex((item) => item.room_id === roomId)
-  //     if (index === -1) {
-  //       mutate("get_room_list")
-  //     } else {
-  //       mutate(
-  //         "get_room_list",
-  //         produce(roomList, (draft) => {
-  //           draft.data[index].message_unread_count = 0
-  //         }),
-  //         false
-  //       )
-  //     }
-  //   }
-  // }
 
   const handleReadMessage = ({
     lastMessage,
@@ -147,8 +127,6 @@ export const RoomDetail = forwardRef(function RoomChild(
   useEffect(() => {
     if (!roomId || !isWindowFocus || !messages?.data?.length) return
     const lastMessage = messages?.data?.[messages?.data?.length - 1]
-
-    console.log({ lastMessageFromUseEffect: lastMessage })
 
     if (lastMessage?.message_id && !lastMessage?.is_author && !lastMessage?.is_read) {
       handleReadMessage({
@@ -222,7 +200,7 @@ export const RoomDetail = forwardRef(function RoomChild(
 
           <MessageForm
             className="border-t border-solid border-border-color bg-bg px-12 md:px-16"
-            ref={messageFormRef}
+            // ref={messageFormRef}
             onSubmit={handleSendMessage}
           />
 

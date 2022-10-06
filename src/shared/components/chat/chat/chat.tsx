@@ -28,26 +28,36 @@ export const Chat = () => {
   const roomDetailRef = useRef<RoomDetailFunctionHandler>(null)
   const roomRef = useRef<RoomFunctionHandler>(null)
   const currentRoomId = useSelector((state: RootState) => state.chat.currentRoomId)
+  const access_token = useSelector((state: RootState) => state.chat.accessToken)
   const [isConnected, setConnected] = useState<boolean>(false)
 
   const createNotification = (data: MessageRes) => {
     Notification.requestPermission().then((per) => {
       if (per === "granted") {
-        new Notification("Tin nhắn mới", {
+        const notification = new Notification(data?.author?.author_name || "Tin nhắn mới", {
           badge: data.author?.author_avatar?.thumbnail_url,
           icon: data.author?.author_avatar?.thumbnail_url,
           body: getMessageDescription(data),
+          tag: data.room_id,
+        })
+
+        notification.addEventListener("click", () => {
+          if (currentRoomId !== data.room_id) {
+            dispatch(setCurrentRoomId(data.room_id))
+          }
+          document.querySelector(`.message-item-${data.message_id}`)?.scrollIntoView()
         })
       }
     })
   }
 
   useEffect(() => {
+    if (!access_token) return
+
     // Connect to socket
     const socket = io(process.env.NEXT_PUBLIC_CHAT_SOCKET_URL as string, {
       query: {
-        access_token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzFkNTZjNTRhMjBiZWY4MmU0NzlmMGQiLCJ1c2VyX2lkIjoyLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE2NjI5MDEzNTl9.7YgTIRjbTGsmUSEfz3RwHl0UdTgv6f9loNJ4Zmz_3nQ",
+        access_token,
       },
     })
 
@@ -84,24 +94,6 @@ export const Chat = () => {
           socket.emit("read_message", data)
         } else {
           createNotification(data)
-
-          // self.addEventListener('notificationclick', (event) => {
-          //   console.log(`On notification click: ${event.n.tag}`);
-          //   event.notification.close();
-
-          //   // This looks to see if the current is already open and
-          //   // focuses if it is
-          //   event.waitUntil(clients.matchAll({
-          //     type: "window"
-          //   }).then((clientList) => {
-          //     for (const client of clientList) {
-          //       if (client.url === '/' && 'focus' in client)
-          //         return client.focus();
-          //     }
-          //     if (clients.openWindow)
-          //       return clients.openWindow('/');
-          //   }));
-          // });
         }
       })
 
@@ -138,7 +130,7 @@ export const Chat = () => {
       socket.off("disconnect")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [access_token])
 
   const handleSendMessage = (params: MessageRes) => {
     roomRef.current?.changeOrderAndAppendLastMessage(params)
@@ -160,7 +152,11 @@ export const Chat = () => {
         <Room ref={roomRef} onSelectRoom={handleSelectRoom} />
       </aside>
 
-      <div className={`block-element flex-col ${!currentRoomId ? "hidden md:flex" : "flex"}`}>
+      <div
+        className={`block-element overflow-hidden flex-col ${
+          !currentRoomId ? "hidden md:flex" : "flex"
+        }`}
+      >
         <RoomDetail onSendMessage={handleSendMessage} ref={roomDetailRef} />
       </div>
     </section>

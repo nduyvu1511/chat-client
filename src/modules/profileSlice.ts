@@ -13,7 +13,10 @@ const profileSlice = createSlice({
   name: "profile_slice",
   initialState,
   reducers: {
-    setProfile: (state, { payload }: PayloadType<UserRes | undefined>) => {
+    setProfile: (
+      state,
+      { payload }: PayloadType<(UserRes & { access_token: string }) | undefined>
+    ) => {
       state.data = payload
     },
   },

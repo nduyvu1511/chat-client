@@ -10,13 +10,13 @@ interface AuthLayoutProps {
 
 const AuthLayout = ({ children }: AuthLayoutProps) => {
   const router = useRouter()
-  const user = useSelector((state: RootState) => state.profile.data)
+  const token = useSelector((state: RootState) => state.chat.accessToken)
 
   useEffect(() => {
-    if (!user?.user_id) {
+    if (!token) {
       router.push("/login")
     }
-  }, [router, user])
+  }, [router, token])
 
   return <App>{children}</App>
 }

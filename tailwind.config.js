@@ -14,7 +14,7 @@ module.exports = {
         "wallet-grid": "440px 1fr",
         "booking-grid-sm": "1fr 400px",
         "chat-lg": "400px 1fr",
-        "chat-md": "280px 1fr",
+        "chat-md": "320px 1fr",
       },
       boxShadow: {
         "shadow-1": "0px 1px 2px rgba(0, 0, 0, 0.05)",

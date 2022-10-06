@@ -43,7 +43,6 @@ export type MessageRes = Pick<IMessage, "room_id" | "created_at"> & {
   message_text: string | null
   reply_to?: MessageReply | null
   location?: Lnglat | null
-  tags?: TagRes[]
   is_read: boolean
   status?: MessageResponseStatus
 }
@@ -148,7 +147,6 @@ export type MessageAttachment = {
 }
 
 export interface MessageForm {
-  tags?: TagRes[]
   attachments?: MessageAttachment[] | AttachmentRes[]
   location?: Lnglat
   text?: string | undefined

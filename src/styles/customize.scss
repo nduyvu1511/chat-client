@@ -1254,10 +1254,11 @@ input[type="number"] {
 
   & .chat-message {
     &-list {
-      max-height: calc(100vh - 154px);
-      @media screen and(min-width: 768px) {
-        max-height: calc(100vh - 170px);
-      }
+      max-height: calc(100vh - 170px);
+      // max-height: calc(100vh - 154px);
+      // @media screen and(min-width: 768px) {
+      //   max-height: calc(100vh - 170px);
+      // }
 
       & .infinite-scroll-component__outerdiv {
         flex: 1;

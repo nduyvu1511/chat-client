@@ -116,7 +116,7 @@ export const MessageItem = ({
   return (
     <div
       className={`message-item relative flex message-item-${data.message_id} ${
-        data?.attachments?.length || data?.location || data?.tags?.length ? "mb-24" : "mb-4"
+        data?.attachments?.length || data?.location ? "mb-24" : "mb-4"
       } ${isLast ? "mb-16" : ""}`}
     >
       {action === "longpress" ? (
@@ -197,6 +197,11 @@ export const MessageItem = ({
                   data.is_author ? "bg-bg-blue ml-auto" : "bg-bg"
                 }`}
               >
+                {!data.is_author && roomType === "group" && shouldBreak ? (
+                  <p className="text-12 leading-[20px] text-gray-color-3 mb-8">
+                    {data.author.author_name}
+                  </p>
+                ) : null}
                 {/* Reply message */}
                 {data?.reply_to?.message_id ? (
                   <div
@@ -217,7 +222,6 @@ export const MessageItem = ({
                     </div>
                   </div>
                 ) : null}
-
                 {/* Message text */}
                 {data?.message_text ? (
                   <Linkify componentDecorator={componentDecorator}>
@@ -226,7 +230,6 @@ export const MessageItem = ({
                     </p>
                   </Linkify>
                 ) : null}
-
                 {/* Location */}
                 {data?.location ? (
                   <div
@@ -240,7 +243,6 @@ export const MessageItem = ({
                     />
                   </div>
                 ) : null}
-
                 {isLast || data.status === "rejected" ? (
                   <MessageStatus
                     onResendMessage={handleResendMessage}
@@ -253,7 +255,6 @@ export const MessageItem = ({
                     status={data?.status}
                   />
                 ) : null}
-
                 {data.reaction_count ? (
                   <MessageReactionCount
                     className={`${data?.message_text || isLast || data.location ? "mt-12" : ""}`}

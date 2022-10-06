@@ -517,11 +517,6 @@ export interface UserData extends UserRes {
   room_joined_ids: string[]
 }
 
-export interface LoginToSocket {
-  socket_id: string
-  // socket: Socket<any>
-}
-
 export type FriendStatusRes = {
   user_id: string
   room_ids: string[]

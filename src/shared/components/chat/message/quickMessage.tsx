@@ -34,7 +34,7 @@ export const QuickMessage = ({ onChange, onClose }: QuickMessageProps) => {
           {data?.data?.map((item) => (
             <div
               onClick={() => {
-                onChange?.(` ${item.text} `)
+                onChange?.(item.text)
                 onClose?.()
               }}
               className="py-12 px-16 hover:bg-bg cursor-pointer"

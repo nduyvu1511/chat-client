@@ -134,7 +134,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
             attachment: params.reply_to?.attachment,
           }
         : undefined,
-      tags: params?.tags || [],
       text: params?.message_text || undefined,
       room_id: params.room_id,
     }
@@ -192,7 +191,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       room_id: data.room_id,
       location: null,
       reply_to: data?.reply_to || null,
-      tags: data?.tags || [],
       status: "pending",
       reactions: [],
       your_reaction: null,
@@ -231,7 +229,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
       reply_to: data?.reply_to
         ? { message_id: data.reply_to.message_id, attachment_id: data.reply_to?.attachment?.id }
         : undefined,
-      tag_ids: data?.tags?.length ? data.tags.map((item) => item.tag_id) : null,
       text: data?.text,
     }
   }
@@ -372,8 +369,6 @@ export const useMessage = ({ initialData, roomId }: UseMessageProps): UseMessage
               .slice(0, _index)
               .concat(messageDraft.reactions.slice(_index + 1))
           }
-
-          messageDraft.reactions = messageDraft.reactions.filter((e) => e !== reaction)
 
           if (is_author) {
             messageDraft.your_reaction = null

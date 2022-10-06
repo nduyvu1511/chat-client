@@ -1,25 +1,24 @@
 import { Map, Modal } from "@/components"
 import { useClickOutside } from "@/hooks"
 import { Lnglat, MessageFormData } from "@/models"
-import { setMessageText } from "@/modules"
 import { ChangeEvent, useRef, useState } from "react"
 import { MdMyLocation, MdOutlineInsertPhoto } from "react-icons/md"
 import { TbMessageShare } from "react-icons/tb"
-import { useDispatch } from "react-redux"
 import { QuickMessage } from "./quickMessage"
 
 interface MessageFormOptionProps {
   data: MessageFormData
   onSendLocation?: (lng: Lnglat) => void
   onInputFileChange?: (e: ChangeEvent<HTMLInputElement>) => void
+  onQuickMessageChange?: (val: string) => void
 }
 
 export const MessageFormOption = ({
   data,
   onInputFileChange,
   onSendLocation,
+  onQuickMessageChange,
 }: MessageFormOptionProps) => {
-  const dispatch = useDispatch()
   const quickMessageRef = useRef<HTMLDivElement>(null)
   const [showQuickMessage, setShowQuickMessage] = useState<boolean>(false)
   const [showMap, setShowMap] = useState<boolean>(false)
@@ -36,7 +35,7 @@ export const MessageFormOption = ({
             <div className="absolute z-[1000] right-0 sm:right-[unset] sm:left-[-340px] md:right-0 md:left-[unset] lg:right-[unset] lg:left-[-340px] max-w-[380px] w-[calc(100vw-40px)] h-[300px] top-[-302px] sm:top-[-310px] md:top-[-302px] lg:top-[-310px] bg-white-color shadow-lg rounded-[8px] border border-solid border-border-color">
               <QuickMessage
                 onClose={() => setShowQuickMessage(false)}
-                onChange={(val) => dispatch(setMessageText(`${data.text || ""}${val}`))}
+                onChange={(val) => onQuickMessageChange?.(val)}
               />
             </div>
           ) : null}
